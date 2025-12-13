@@ -5,6 +5,9 @@
 
 @section('content')
 
+    {{-- LOAD ALPINE JS --}}
+    <script src="//unpkg.com/alpinejs" defer></script>
+
     {{-- GLOBAL BACKGROUND GRID EFFECT (GREEN THEME) --}}
     <div class="fixed inset-0 pointer-events-none z-0" 
          style="background-image: linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px), 
@@ -116,11 +119,90 @@
                             <td class="p-4 border-r border-emerald-500/20 bg-emerald-900/10 font-bold text-white font-mono relative">
                                 {{-- Active Indicator Line --}}
                                 <div class="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded bg-gray-800 border border-gray-600 flex items-center justify-center text-gray-400 text-xs">
-                                        <i class="fas fa-user"></i>
+                                <div class="flex items-center gap-3 justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded bg-gray-800 border border-gray-600 flex items-center justify-center text-gray-400 text-xs">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        {{ $candidate->name }}
                                     </div>
-                                    {{ $candidate->name }}
+                                    
+                                    {{-- CV DETAIL BUTTON & MODAL (ALPINE JS) --}}
+                                    <div x-data="{ showCV: false }">
+                                        <button type="button" @click="showCV = true" class="text-[10px] bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 px-2 py-1 rounded transition-all" title="Lihat Profil Lengkap">
+                                            <i class="fas fa-id-card"></i> CV
+                                        </button>
+
+                                        {{-- MODAL OVERLAY --}}
+                                        <div x-show="showCV" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm" style="display: none;" x-transition.opacity>
+                                            {{-- MODAL CONTENT --}}
+                                            <div @click.away="showCV = false" class="bg-[#0B1120] border border-blue-500/50 w-full max-w-lg rounded-xl shadow-[0_0_50px_rgba(59,130,246,0.3)] relative overflow-hidden" x-transition.scale>
+                                                
+                                                {{-- Header Modal --}}
+                                                <div class="bg-blue-900/20 p-4 border-b border-blue-500/30 flex justify-between items-center">
+                                                    <h3 class="font-mono font-bold text-blue-400 flex items-center gap-2">
+                                                        <i class="fas fa-user-tie"></i> PROFILE KANDIDAT
+                                                    </h3>
+                                                    <button type="button" @click="showCV = false" class="text-gray-500 hover:text-red-400 transition-colors">
+                                                        <i class="fas fa-times text-lg"></i>
+                                                    </button>
+                                                </div>
+
+                                                {{-- Body Modal --}}
+                                                <div class="p-6 space-y-4 font-mono text-sm text-gray-300">
+                                                    
+                                                    <div class="flex items-center gap-4 mb-6">
+                                                        <div class="w-16 h-16 rounded-full bg-gray-700 border-2 border-blue-500 flex items-center justify-center text-3xl text-gray-400 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                                                            <i class="fas fa-user"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h2 class="text-xl font-bold text-white uppercase">{{ $candidate->full_name ?? $candidate->name }}</h2>
+                                                            <p class="text-blue-400 text-xs tracking-wider">CANDIDATE ID: #{{ $candidate->id }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="grid grid-cols-2 gap-4">
+                                                        <div class="bg-gray-800/50 p-3 rounded border border-gray-700">
+                                                            <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">UMUR</label>
+                                                            <div class="text-white">{{ $candidate->age }} Tahun</div>
+                                                        </div>
+                                                        <div class="bg-gray-800/50 p-3 rounded border border-gray-700">
+                                                            <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">PENGALAMAN</label>
+                                                            <div class="text-white">{{ $candidate->experience_year }} Tahun</div>
+                                                        </div>
+                                                        <div class="bg-gray-800/50 p-3 rounded border border-gray-700">
+                                                            <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">DOMISILI</label>
+                                                            <div class="text-white">{{ $candidate->domicile_city ?? '-' }}</div>
+                                                        </div>
+                                                        <div class="bg-gray-800/50 p-3 rounded border border-gray-700">
+                                                            <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">NO. HP</label>
+                                                            <div class="text-white">{{ $candidate->phone_number ?? '-' }}</div>
+                                                        </div>
+                                                        <div class="col-span-2 bg-gray-800/50 p-3 rounded border border-gray-700">
+                                                            <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">EMAIL</label>
+                                                            <div class="text-white">{{ $candidate->email ?? '-' }}</div>
+                                                        </div>
+                                                        @if($candidate->portfolio_link)
+                                                        <div class="col-span-2 bg-blue-900/10 p-3 rounded border border-blue-500/30 hover:bg-blue-900/20 transition-colors cursor-pointer" onclick="window.open('{{ $candidate->portfolio_link }}', '_blank')">
+                                                            <label class="block text-[10px] text-blue-400 uppercase tracking-widest mb-1 pointer-events-none">PORTFOLIO</label>
+                                                            <div class="text-blue-300 flex items-center gap-2">
+                                                                <i class="fas fa-link"></i> {{ $candidate->portfolio_link }}
+                                                            </div>
+                                                        </div>
+                                                        @endif
+                                                    </div>
+
+                                                </div>
+                                                
+                                                {{-- Footer Modal --}}
+                                                <div class="bg-black/40 p-3 text-center border-t border-gray-800">
+                                                    <p class="text-[10px] text-gray-600 uppercase tracking-[0.2em]">CONFIDENTIAL DATA</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {{-- END MODAL --}}
+
                                 </div>
                             </td>
                             @foreach($criterias as $criteria)
