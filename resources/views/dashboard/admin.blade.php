@@ -291,17 +291,33 @@
                             <th>Nama</th>
                             <th>Email</th>
                             <th>Role</th>
+                            <th>Level</th>
                             <th class="text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($users as $user)
+                        @php
+                            $levelText = '-';
+                            $levelColor = 'text-gray-500';
+                            switch($user->role) {
+                                case 'area_manager': $levelText = 'TERTINGGI'; $levelColor = 'text-cyan-400'; break;
+                                case 'store_manager': $levelText = 'KEPALA TOKO'; $levelColor = 'text-red-400'; break;
+                                case 'hr': $levelText = 'HR DEPARTMENT'; $levelColor = 'text-orange-400'; break;
+                                case 'admin': $levelText = 'ADMIN'; $levelColor = 'text-purple-400'; break;
+                            }
+                        @endphp
                         <tr>
                             <td class="font-bold">{{ $user->name }}</td>
                             <td>{{ $user->email }}</td>
                             <td>
                                 <span class="border border-white/20 px-2 py-1 rounded text-[10px] font-mono uppercase text-cyan-neon">
                                     {{ $user->role }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-[10px] font-mono uppercase {{ $levelColor }} tracking-wider">
+                                    {{ $levelText }}
                                 </span>
                             </td>
                             <td class="text-right">
