@@ -90,7 +90,12 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'age' => 'required|integer|min:18',
-            'experience_year' => 'required|integer|min:0'
+            'experience_year' => 'required|integer|min:0',
+            'full_name' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'domicile_city' => 'nullable|string|max:255',
+            'portfolio_link' => 'nullable|url|max:255',
         ]);
 
         $activePeriod = Period::where('is_active', true)->first();
@@ -99,10 +104,15 @@ class AdminController extends Controller
         }
 
         Candidate::create([
-        'period_id' => $activePeriod->id,
-        'name' => strtoupper($request->name),
-        'age' => $request->age,
-        'experience_year' => $request->experience_year,
+            'period_id' => $activePeriod->id,
+            'name' => strtoupper($request->name),
+            'age' => $request->age,
+            'experience_year' => $request->experience_year,
+            'full_name' => $request->full_name,
+            'phone_number' => $request->phone_number,
+            'email' => $request->email,
+            'domicile_city' => $request->domicile_city,
+            'portfolio_link' => $request->portfolio_link,
         ]);
         
         return back()->with('success', 'Kandidat berhasil ditambahkan ke periode ' . $activePeriod->name . '.');

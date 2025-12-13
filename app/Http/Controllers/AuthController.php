@@ -5,12 +5,23 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use App\Models\LoginLog;
+
 class AuthController extends Controller
 {
     // 1. Tampilkan Halaman Login
-    public function showLoginForm()
+    public function showLoginForm(Request $request)
     {
-        return view('auth.login');
+        // Log Access
+        LoginLog::create([
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        // Get Latest Logs
+        $logs = LoginLog::latest()->take(10)->get();
+
+        return view('auth.login', compact('logs'));
     }
 
     // 2. Proses Login

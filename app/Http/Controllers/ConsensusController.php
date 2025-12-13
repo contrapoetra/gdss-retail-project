@@ -98,6 +98,21 @@ class ConsensusController extends Controller
             }
         }
 
+        // --- ADDED: REAL-TIME VOTING STATUS ---
+        // Hitung user yang sudah vote (unik) di periode ini
+        $votersCount = Evaluation::whereHas('candidate', function($q) use ($selectedPeriodId) {
+            $q->where('period_id', $selectedPeriodId);
+        })->distinct('user_id')->count('user_id');
+
+        // Total user pengambil keputusan (Selain Admin)
+        $totalVoters = \App\Models\User::where('role', '!=', 'admin')->count();
+        
+        $votingProgress = [
+            'voted' => $votersCount,
+            'total' => $totalVoters,
+            'percent' => $totalVoters > 0 ? round(($votersCount / $totalVoters) * 100) : 0
+        ];
+
         return view('evaluation.result', [
             'hasResult' => true,
             'results' => $results,
@@ -109,7 +124,8 @@ class ConsensusController extends Controller
             'matrixR' => $matrixR,
             'matrixY' => $matrixY,
             'periods' => $periods,
-            'selectedPeriodId' => $selectedPeriodId
+            'selectedPeriodId' => $selectedPeriodId,
+            'votingProgress' => $votingProgress // Pass data
         ]);
     }
 

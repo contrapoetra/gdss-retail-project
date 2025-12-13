@@ -460,15 +460,16 @@
                     
                     <!-- FORM TAMBAH KANDIDAT -->
                     @if($activePeriod && $activePeriod->id == $selectedPeriodId)
-                    <form action="{{ route('admin.candidate.store') }}" method="POST" class="mb-8 grid grid-cols-4 gap-4 items-end">
+                    <form action="{{ route('admin.candidate.store') }}" method="POST" class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end bg-cyan-900/10 p-4 rounded border border-cyan-500/20">
                         @csrf
                         
-                        <div class="col-span-2">
-                            <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">NAMA KANDIDAT</label>
+                        <!-- Row 1 -->
+                        <div class="col-span-2 md:col-span-2">
+                            <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">NAMA PANGGILAN (DISPLAY)</label>
                             <input 
                                 type="text" 
                                 name="name" 
-                                placeholder="NAMA LENGKAP" 
+                                placeholder="NAMA PANGGILAN" 
                                 class="tech-input w-full px-3 py-2 rounded text-sm uppercase"
                                 required
                                 maxlength="60"
@@ -476,14 +477,21 @@
                             >
                         </div>
                         
+                        <div class="col-span-2 md:col-span-2">
+                            <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">NAMA LENGKAP (CV)</label>
+                            <input 
+                                type="text" 
+                                name="full_name" 
+                                placeholder="NAMA LENGKAP SESUAI KTP" 
+                                class="tech-input w-full px-3 py-2 rounded text-sm"
+                            >
+                        </div>
+
+                        <!-- Row 2 -->
                         <div>
                             <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">UMUR</label>
                             <div class="neon-select">
-                                <select 
-                                    name="age" 
-                                    class="tech-input w-full px-3 py-2 rounded text-sm text-center"
-                                    required
-                                >
+                                <select name="age" class="tech-input w-full px-3 py-2 rounded text-sm text-center" required>
                                     @for($i = 18; $i <= 63; $i++)
                                         <option value="{{ $i }}">{{ $i }}</option>
                                     @endfor
@@ -491,23 +499,40 @@
                             </div>
                         </div>
                         
-                        <div class="flex gap-2">
+                        <div>
+                            <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">EXP (THN)</label>
+                            <div class="neon-select">
+                                <select name="experience_year" class="tech-input w-full px-3 py-2 rounded text-sm text-center" required>
+                                    @for($i = 0; $i <= 30; $i++)
+                                        <option value="{{ $i }}">{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">NO. HP</label>
+                            <input type="text" name="phone_number" placeholder="08..." class="tech-input w-full px-3 py-2 rounded text-sm">
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">KOTA DOMISILI</label>
+                            <input type="text" name="domicile_city" placeholder="KOTA" class="tech-input w-full px-3 py-2 rounded text-sm">
+                        </div>
+
+                        <!-- Row 3 -->
+                        <div class="col-span-2">
+                            <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">EMAIL</label>
+                            <input type="email" name="email" placeholder="email@example.com" class="tech-input w-full px-3 py-2 rounded text-sm">
+                        </div>
+
+                        <div class="col-span-2 flex gap-2">
                             <div class="flex-1">
-                                <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">EXP (THN)</label>
-                                <div class="neon-select">
-                                    <select 
-                                        name="experience_year" 
-                                        class="tech-input w-full px-3 py-2 rounded text-sm text-center"
-                                        required
-                                    >
-                                        @for($i = 3; $i <= 20; $i++)
-                                            <option value="{{ $i }}">{{ $i }}</option>
-                                        @endfor
-                                    </select>
-                                </div>
+                                <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">LINK PORTFOLIO</label>
+                                <input type="url" name="portfolio_link" placeholder="https://..." class="tech-input w-full px-3 py-2 rounded text-sm">
                             </div>
                             <button type="submit" class="tech-btn px-4 py-2 rounded text-xs h-[38px] self-end mb-px hover:bg-cyan-neon hover:text-black hover:shadow-[0_0_15px_#00e5ff] border-cyan-neon text-cyan-neon">
-                                <i class="fas fa-plus"></i>
+                                <i class="fas fa-plus"></i> ADD
                             </button>
                         </div>
                     </form>

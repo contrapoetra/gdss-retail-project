@@ -211,10 +211,32 @@
                     Dilakukan Pada: <span class="font-bold text-yellow-400">{{ $lastRun->format('d M Y, H:i') }}</span>
                 </div>
 
+                {{-- A. VOTING STATUS (REAL-TIME PROGRESS) --}}
+                @if(isset($votingProgress))
+                <div class="mb-6 bg-[#050b14] p-4 rounded-lg border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)] relative overflow-hidden group no-print">
+                    <div class="absolute inset-0 bg-blue-900/5 group-hover:bg-blue-900/10 transition-colors"></div>
+                    <div class="relative z-10 flex justify-between items-end mb-2">
+                        <div>
+                            <h3 class="font-mono font-bold text-blue-400 text-xs uppercase tracking-widest"><i class="fas fa-satellite-dish mr-2 animate-pulse"></i> Status Penilaian (Real-Time)</h3>
+                            <p class="text-[10px] text-gray-500 font-mono mt-1">Partisipasi Decision Maker dalam Periode Ini</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-2xl font-black text-white">{{ $votingProgress['percent'] }}%</span>
+                            <span class="text-[10px] text-gray-400 font-mono block">{{ $votingProgress['voted'] }} / {{ $votingProgress['total'] }} Voted</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative">
+                        <div class="bg-blue-500 h-full shadow-[0_0_10px_#3b82f6] relative" style="width: {{ $votingProgress['percent'] }}%">
+                            <div class="absolute inset-0 bg-white/20 animate-[shimmer_1s_infinite]"></div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 {{-- GRID LAYOUT --}}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 grid-print">
                     
-                    {{-- A. GRAFIK CHART --}}
+                    {{-- B. GRAFIK BAR (BORDA) --}}
                     <div class="bg-[#050b14] p-6 rounded-lg border border-yellow-500/20 shadow-inner col-print relative cyber-corners group transition-colors duration-500">
                         <h3 class="font-mono font-bold text-gray-400 text-xs mb-4 border-b border-gray-800 pb-2 uppercase tracking-wider group-hover:text-yellow-400 transition-colors">
                             <i class="fas fa-chart-bar mr-2 text-yellow-500"></i> Statistik (Poin Borda)
@@ -224,8 +246,18 @@
                         </div>
                     </div>
 
-                    {{-- B. JUARA UTAMA (WINNER CARD) --}}
-                    <div class="bg-linear-to-br from-yellow-900/20 to-[#050b14] p-6 rounded-lg border border-yellow-500/30 text-center flex flex-col justify-center items-center mt-4 lg:mt-0 col-print relative overflow-hidden hover:shadow-[0_0_30px_rgba(234,179,8,0.15)] transition-all duration-500">
+                    {{-- C. GRAFIK RADAR (BOUNDARY) --}}
+                    <div class="bg-[#050b14] p-6 rounded-lg border border-cyan-500/20 shadow-inner col-print relative cyber-corners group transition-colors duration-500">
+                        <h3 class="font-mono font-bold text-gray-400 text-xs mb-4 border-b border-gray-800 pb-2 uppercase tracking-wider group-hover:text-cyan-400 transition-colors">
+                            <i class="fas fa-spider mr-2 text-cyan-500"></i> Boundary Chart (Top 3 Performance)
+                        </h3>
+                        <div class="h-64 w-full relative">
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                    </div>
+
+                    {{-- D. JUARA UTAMA (WINNER CARD) --}}
+                    <div class="lg:col-span-2 bg-linear-to-br from-yellow-900/20 to-[#050b14] p-6 rounded-lg border border-yellow-500/30 text-center flex flex-col justify-center items-center mt-4 lg:mt-0 col-print relative overflow-hidden hover:shadow-[0_0_30px_rgba(234,179,8,0.15)] transition-all duration-500">
                         {{-- Decorative Background --}}
                         <div class="absolute inset-0" style="background-image: radial-gradient(circle at center, rgba(234,179,8,0.1) 0%, transparent 70%);"></div>
                         <div class="absolute top-0 right-0 p-2 opacity-30"><i class="fas fa-quote-right text-4xl text-yellow-900"></i></div>
@@ -468,60 +500,67 @@
     {{-- ============================================================ --}}
     @if($hasResult)
     <div id="pdf-template">
-        <div style="width: 100%; padding: 40px; background: white; color: black; font-family: 'Times New Roman', serif;">
+        <div style="width: 210mm; min-height: 297mm; padding: 20mm; background: white; color: black; font-family: 'Times New Roman', serif; margin: 0 auto; position: relative;">
             
-            {{-- A. Header Kop --}}
-            <div style="text-align: center; border-bottom: 3px double black; padding-bottom: 20px; margin-bottom: 30px;">
-                <h1 style="font-size: 24px; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 1px;">PENGUMUMAN HASIL KEPUTUSAN</h1>
-                <h2 style="font-size: 18px; font-weight: bold; margin: 5px 0;">PEMILIHAN SUPERVISOR TOKO RETAIL</h2>
-                <p style="font-size: 12px; color: #555; margin-top: 10px;">Dicetak pada: {{ now()->translatedFormat('d F Y, H:i') }} WIB</p>
+            {{-- CONFIDENTIAL WATERMARK --}}
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 80px; color: rgba(0,0,0,0.05); font-weight: bold; pointer-events: none; white-space: nowrap;">
+                CONFIDENTIAL DOCUMENT
             </div>
 
-            {{-- B. Bagian Grafik (Image akan diinject via JS) --}}
-            <div style="margin-bottom: 30px;">
-                <h3 style="font-size: 14px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px;">
-                    I. STATISTIK PEROLEHAN POIN (BORDA)
-                </h3>
-                <div style="width: 100%; display: flex; justify-content: center;">
-                    {{-- Image tag ini akan diisi oleh JS --}}
-                    <img id="chartImageTarget" src="" style="max-width: 100%; max-height: 350px; border: 1px solid #eee;">
+            {{-- A. Header Kop --}}
+            <div style="text-align: center; border-bottom: 3px double black; padding-bottom: 10px; margin-bottom: 20px;">
+                <h1 style="font-size: 20px; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 1px;">BERITA ACARA KEPUTUSAN</h1>
+                <h2 style="font-size: 16px; font-weight: bold; margin: 5px 0;">SISTEM PENDUKUNG KEPUTUSAN (GDSS)</h2>
+                <p style="font-size: 11px; color: #555; margin-top: 5px;">Dicetak pada: {{ now()->translatedFormat('d F Y, H:i') }} WIB</p>
+            </div>
+
+            {{-- B. Bagian Grafik --}}
+            <div style="display: flex; gap: 20px; margin-bottom: 20px; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <h3 style="font-size: 12px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 3px; margin-bottom: 10px;">
+                        I. STATISTIK POIN (BORDA)
+                    </h3>
+                    <img id="chartImageTarget" src="" style="width: 100%; border: 1px solid #eee; height: auto;">
+                </div>
+                <div style="flex: 1;">
+                    <h3 style="font-size: 12px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 3px; margin-bottom: 10px;">
+                        II. ANALISIS BOUNDARY (RADAR)
+                    </h3>
+                    <img id="radarImageTarget" src="" style="width: 100%; border: 1px solid #eee; height: auto;">
                 </div>
             </div>
 
             {{-- C. Bagian Pemenang --}}
-            <div style="margin-bottom: 30px; text-align: center; padding: 20px; border: 2px dashed #000; border-radius: 10px; background-color: #f9f9f9;">
-                <h4 style="font-size: 12px; color: #555; uppercase; letter-spacing: 2px; margin-bottom: 10px;">KANDIDAT DIREKOMENDASIKAN</h4>
+            <div style="margin-bottom: 20px; text-align: center; padding: 15px; border: 2px solid #000; background-color: #f3f4f6;">
+                <h4 style="font-size: 10px; color: #555; uppercase; letter-spacing: 2px; margin-bottom: 5px;">KANDIDAT TERPILIH (RANK 1)</h4>
                 @if(isset($results[0]))
-                    <h1 style="font-size: 42px; font-weight: 900; margin: 10px 0; text-transform: uppercase;">{{ $results[0]->candidate->name }}</h1>
-                    <div style="display: inline-block; border: 2px solid black; padding: 5px 20px; border-radius: 50px; font-weight: bold; font-size: 14px;">
-                        TOTAL SKOR: {{ $results[0]->total_points }}
-                    </div>
+                    <h1 style="font-size: 32px; font-weight: 900; margin: 5px 0; text-transform: uppercase;">{{ $results[0]->candidate->name }}</h1>
+                    <div style="font-size: 12px;">Total Poin: <strong>{{ $results[0]->total_points }}</strong></div>
                 @endif
             </div>
 
             {{-- D. Tabel Detail --}}
-            <div style="margin-bottom: 40px;">
-                <h3 style="font-size: 14px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px;">
-                    II. DETAIL PERINGKAT FINAL (TOP 3)
+            <div style="margin-bottom: 30px;">
+                <h3 style="font-size: 12px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 3px; margin-bottom: 10px;">
+                    III. RINCIAN PERINGKAT
                 </h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
                     <thead>
                         <tr style="background-color: #e5e7eb;">
-                            <th style="border: 1px solid black; padding: 8px; text-align: center; width: 50px;">RANK</th>
-                            <th style="border: 1px solid black; padding: 8px; text-align: left;">NAMA KANDIDAT</th>
-                            <th style="border: 1px solid black; padding: 8px; text-align: center;">TOTAL POIN</th>
-                            <th style="border: 1px solid black; padding: 8px; text-align: center;">STATUS</th>
+                            <th style="border: 1px solid black; padding: 6px; text-align: center; width: 40px;">NO</th>
+                            <th style="border: 1px solid black; padding: 6px; text-align: left;">NAMA KANDIDAT</th>
+                            <th style="border: 1px solid black; padding: 6px; text-align: center;">POIN BORDA</th>
+                            <th style="border: 1px solid black; padding: 6px; text-align: center;">KETERANGAN</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {{-- MODIFIKASI: Menggunakan take(3) untuk membatasi hanya 3 baris --}}
-                        @foreach($results->take(3) as $res)
-                            <tr style="{{ $res->final_rank == 1 ? 'background-color: #f3f4f6; font-weight: bold;' : '' }}">
-                                <td style="border: 1px solid black; padding: 8px; text-align: center;">{{ $res->final_rank }}</td>
-                                <td style="border: 1px solid black; padding: 8px;">{{ $res->candidate->name }}</td>
-                                <td style="border: 1px solid black; padding: 8px; text-align: center;">{{ $res->total_points }}</td>
-                                <td style="border: 1px solid black; padding: 8px; text-align: center;">
-                                    @if($res->final_rank <= 3) REKOMENDASI @else - @endif
+                        @foreach($results->take(5) as $res)
+                            <tr style="{{ $res->final_rank == 1 ? 'background-color: #f9fafb; font-weight: bold;' : '' }}">
+                                <td style="border: 1px solid black; padding: 6px; text-align: center;">{{ $res->final_rank }}</td>
+                                <td style="border: 1px solid black; padding: 6px;">{{ $res->candidate->name }}</td>
+                                <td style="border: 1px solid black; padding: 6px; text-align: center;">{{ $res->total_points }}</td>
+                                <td style="border: 1px solid black; padding: 6px; text-align: center;">
+                                    @if($res->final_rank <= 3) RECOMMENDED @else - @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -530,14 +569,14 @@
             </div>
 
             {{-- E. Tanda Tangan --}}
-            <div style="display: flex; justify-content: space-between; margin-top: 50px;">
+            <div style="display: flex; justify-content: space-between; margin-top: 40px; page-break-inside: avoid;">
                 <div style="width: 40%; text-align: center;">
-                    <p style="margin-bottom: 60px;">Mengetahui,<br><strong>HR Department</strong></p>
-                    <p style="border-top: 1px solid black; width: 80%; margin: 0 auto; padding-top: 5px;">( ................................. )</p>
+                    <p style="margin-bottom: 50px; font-size: 12px;">Dibuat Oleh,<br><strong>HR Department</strong></p>
+                    <p style="border-top: 1px solid black; width: 80%; margin: 0 auto; padding-top: 5px; font-size: 12px;">( ................................. )</p>
                 </div>
                 <div style="width: 40%; text-align: center;">
-                    <p style="margin-bottom: 60px;">Menyetujui,<br><strong>Area Manager</strong></p>
-                    <p style="border-top: 1px solid black; width: 80%; margin: 0 auto; padding-top: 5px; font-weight: bold; text-transform: uppercase;">
+                    <p style="margin-bottom: 50px; font-size: 12px;">Disetujui Oleh,<br><strong>Area Manager</strong></p>
+                    <p style="border-top: 1px solid black; width: 80%; margin: 0 auto; padding-top: 5px; font-weight: bold; text-transform: uppercase; font-size: 12px;">
                         {{ Auth::user()->role == 'area_manager' ? Auth::user()->name : '( ................................. )' }}
                     </p>
                 </div>
@@ -551,6 +590,7 @@
         <script>
             // A. Render Chart untuk Layar (Kode Asli Dipertahankan)
             document.addEventListener("DOMContentLoaded", function() {
+                // 1. BORDA CHART
                 const ctx = document.getElementById('bordaChart');
                 const rawLabels = {!! json_encode($results->pluck('candidate.name') ?? []) !!};
                 const rawData = {!! json_encode($results->pluck('total_points') ?? []) !!};
@@ -561,7 +601,6 @@
                     gradient.addColorStop(0, 'rgba(234, 179, 8, 0.9)'); 
                     gradient.addColorStop(1, 'rgba(234, 179, 8, 0.1)');
 
-                    // Simpan instance chart ke window agar bisa diakses fungsi generatePDF
                     window.myChartInstance = new Chart(ctx, {
                         type: 'bar',
                         data: {
@@ -612,46 +651,111 @@
                         }
                     });
                 }
+
+                // 2. RADAR CHART (BOUNDARY)
+                const ctxRadar = document.getElementById('radarChart');
+                if (ctxRadar) {
+                    const criteriaCodes = {!! json_encode($criterias->pluck('code')) !!};
+                    const criteriaIds = {!! json_encode($criterias->pluck('id')) !!};
+                    
+                    // Ambil Top 3 Kandidat
+                    const topCandidates = {!! json_encode($results->take(3)->pluck('candidate')) !!};
+                    const matrixR = {!! json_encode($matrixR) !!};
+                    
+                    const radarDatasets = topCandidates.map((cand, index) => {
+                        // Map data sesuai urutan criteriaIds
+                        const data = criteriaIds.map(id => matrixR[cand.id] ? matrixR[cand.id][id] : 0);
+                        
+                        const colors = [
+                            { border: 'rgba(234, 179, 8, 1)', bg: 'rgba(234, 179, 8, 0.2)' }, // Yellow (1st)
+                            { border: 'rgba(59, 130, 246, 1)', bg: 'rgba(59, 130, 246, 0.2)' }, // Blue (2nd)
+                            { border: 'rgba(16, 185, 129, 1)', bg: 'rgba(16, 185, 129, 0.2)' }, // Green (3rd)
+                        ];
+                        const c = colors[index] || { border: '#999', bg: '#ddd' };
+
+                        return {
+                            label: cand.name,
+                            data: data,
+                            borderColor: c.border,
+                            backgroundColor: c.bg,
+                            borderWidth: 2,
+                            pointBackgroundColor: c.border,
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: c.border
+                        };
+                    });
+
+                    new Chart(ctxRadar, {
+                        type: 'radar',
+                        data: {
+                            labels: criteriaCodes,
+                            datasets: radarDatasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            elements: { line: { tension: 0.3 } },
+                            scales: {
+                                r: {
+                                    angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    pointLabels: { color: '#9ca3af', font: { family: 'monospace', size: 10 } },
+                                    ticks: { display: false, backdropColor: 'transparent' },
+                                    suggestedMin: 0,
+                                    suggestedMax: 1
+                                }
+                            },
+                            plugins: {
+                                legend: { 
+                                    labels: { color: '#d1d5db', font: { family: 'monospace' } },
+                                    position: 'bottom'
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                                    titleFont: { family: 'monospace' },
+                                    bodyFont: { family: 'monospace' }
+                                }
+                            }
+                        }
+                    });
+                }
             });
 
             // [ADD] B. Fungsi Generate PDF menggunakan html2pdf
             function generatePDF() {
-                // 1. Ambil elemen template PDF
                 const element = document.getElementById('pdf-template');
                 
-                // 2. Ambil Chart Canvas asli & Tempat Gambar di PDF
-                const originalCanvas = document.getElementById('bordaChart');
-                const targetImg = document.getElementById('chartImageTarget');
+                // Canvas Helpers
+                const captureCanvas = (id) => {
+                    const c = document.getElementById(id);
+                    if (!c) return null;
+                    const temp = document.createElement('canvas');
+                    temp.width = c.width; temp.height = c.height;
+                    const ctx = temp.getContext('2d');
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, temp.width, temp.height);
+                    ctx.drawImage(c, 0, 0);
+                    return temp.toDataURL('image/jpeg', 1.0);
+                };
 
-                if(originalCanvas && targetImg) {
-                    // Trik: Buat canvas sementara background putih agar gambar chart tidak transparan/hitam di PDF
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = originalCanvas.width;
-                    tempCanvas.height = originalCanvas.height;
-                    const tCtx = tempCanvas.getContext('2d');
-                    
-                    // Isi background putih
-                    tCtx.fillStyle = '#FFFFFF';
-                    tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                    // Gambar ulang chart di atas putih
-                    tCtx.drawImage(originalCanvas, 0, 0);
-                    
-                    // Masukkan gambar ke template
-                    targetImg.src = tempCanvas.toDataURL('image/jpeg', 1.0);
-                }
+                // Inject Borda Chart
+                const bordaImg = captureCanvas('bordaChart');
+                if(bordaImg) document.getElementById('chartImageTarget').src = bordaImg;
 
-                // 3. Konfigurasi html2pdf
+                // Inject Radar Chart
+                const radarImg = captureCanvas('radarChart');
+                if(radarImg) document.getElementById('radarImageTarget').src = radarImg;
+
                 const opt = {
-                    margin:       10, // dalam mm
+                    margin:       0, // Reset margin
                     filename:     'Laporan_Keputusan_Final.pdf',
                     image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true }, // Scale 2 agar tajam
+                    html2canvas:  { scale: 2, useCORS: true },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
-                // 4. Tampilkan template sementara, generate, lalu sembunyikan lagi
                 element.style.display = 'block'; 
-                
                 html2pdf().set(opt).from(element).save().then(function(){
                     element.style.display = 'none'; 
                 });

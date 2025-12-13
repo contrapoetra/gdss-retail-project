@@ -14,7 +14,12 @@ class Candidate extends Model
         'period_id',
         'name', 
         'age', 
-        'experience_year'
+        'experience_year',
+        'full_name',
+        'phone_number',
+        'email',
+        'domicile_city',
+        'portfolio_link'
     ];
 
     public function period()

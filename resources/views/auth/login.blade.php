@@ -347,8 +347,29 @@
         </div>
     </div>
 
+    <!-- IP LOGS REALTIME -->
+    <div class="fixed bottom-4 left-4 z-50 pointer-events-none hidden md:block font-mono text-[10px] text-gray-500 opacity-60 hover:opacity-100 transition-opacity">
+        <div class="bg-black/80 p-3 border border-white/10 rounded backdrop-blur max-w-[250px] overflow-hidden">
+            <h4 class="text-gold-biz mb-2 uppercase tracking-wider border-b border-white/10 pb-1 flex justify-between">
+                <span>>> ACCESS_LOGS</span>
+                <span class="animate-pulse">●</span>
+            </h4>
+            <ul class="space-y-1 max-h-[150px] overflow-y-auto scrollbar-hide">
+                @if(isset($logs))
+                    @foreach($logs as $log)
+                    <li class="flex justify-between gap-4 text-[9px]">
+                        <span class="text-emerald-500 font-bold">> {{ $log->ip_address }}</span>
+                        <span class="text-gray-400">{{ $log->created_at->diffForHumans() }}</span>
+                    </li>
+                    @endforeach
+                @else
+                    <li class="opacity-50">> SYSTEM IDLE...</li>
+                @endif
+            </ul>
+        </div>
+    </div>
+
     <script>
-        // --- 1. BOOT SEQUENCE ---
         const bootScreen = document.getElementById('boot-screen');
         const terminalOutput = document.getElementById('terminal-output');
         const bootBar = document.getElementById('boot-bar');
