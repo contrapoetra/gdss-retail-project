@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'ADMIN // NEXUS')</title>
+    <title>@yield('title', 'ADMIN')</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@200;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -49,11 +49,11 @@
             background-color: #05000a;
             margin: 0;
             color: white;
-            cursor: none; /* Menyembunyikan cursor asli */
+            cursor: none;
             overflow-x: hidden;
         }
 
-        /* --- SCROLLBAR --- */
+        /* --- SCROLLBAR GLOBAL --- */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0a050f; }
         ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
@@ -99,7 +99,7 @@
             box-shadow: 0 0 30px rgba(217, 70, 239, 0.15);
         }
 
-        /* --- TECH INPUTS & BUTTONS --- */
+        /* --- INPUT & BUTTON --- */
         .tech-input {
             background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
             transition: all 0.3s ease; color: #fff; font-family: 'Space Mono', monospace;
@@ -139,24 +139,85 @@
             background: rgba(217, 70, 239, 0.05); color: white;
         }
 
-        /* --- CURSOR (REVISI Z-INDEX) --- */
+        /* --- CUSTOM NEON SELECT --- */
+        .neon-select {
+            position: relative;
+        }
+
+        .neon-select select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background: radial-gradient(circle at top left, rgba(217,70,239,0.2), transparent 55%) rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #e5e7eb;
+            padding-right: 2.2rem;
+            cursor: pointer;
+        }
+
+        .neon-select::after {
+            content: "\f078";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.6rem;
+            color: var(--secondary);
+            pointer-events: none;
+            text-shadow: 0 0 8px rgba(0,229,255,0.8);
+        }
+
+        .neon-select select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 16px rgba(217,70,239,0.55);
+        }
+
+        .neon-select select option {
+            background-color: #05000f;
+            color: #e5e7eb;
+            font-family: 'Space Mono', monospace;
+            padding: 0.4rem 0.75rem;
+        }
+
+        .neon-select select option:hover,
+        .neon-select select option:checked {
+            background-color: rgba(217,70,239,0.35);
+            color: #ffffff;
+        }
+
+        /* --- HERO TITLE: lebih terang + glow --- */
+        .hero-title {
+            color: #f9fafb;
+            text-shadow:
+                0 0 12px rgba(0, 229, 255, 0.9),
+                0 0 26px rgba(217, 70, 239, 0.75),
+                0 0 40px rgba(217, 70, 239, 0.6);
+        }
+
+        /* --- CURSOR (SELALU DI ATAS MODAL) --- */
         #cursor {
             position: fixed; top: 0; left: 0; width: 20px; height: 20px;
             border: 1px solid var(--primary); border-radius: 50%;
             transform: translate(-50%, -50%); pointer-events: none; 
-            /* Z-INDEX DINAIKKAN MENJADI 99999 AGAR DI ATAS MODAL (YANG 10000) */
-            z-index: 99999;
-            transition: width 0.2s, height 0.2s; mix-blend-mode: difference;
+            z-index: 200000; /* > modal */
+            transition: width 0.2s, height 0.2s;
+            mix-blend-mode: difference;
         }
         #cursor-dot {
             position: fixed; top: 0; left: 0; width: 4px; height: 4px;
             background: var(--primary); border-radius: 50%; transform: translate(-50%, -50%);
             pointer-events: none; 
-            /* Z-INDEX DINAIKKAN MENJADI 99999 AGAR DI ATAS MODAL */
-            z-index: 99999;
+            z-index: 200001; /* sedikit di atas ring */
         }
         .cursor-hover {
             width: 50px !important; height: 50px !important; background-color: rgba(217, 70, 239, 0.2);
+        }
+
+        /* --- MODAL LOGOUT: di atas konten, di bawah cursor --- */
+        #shutdown-modal {
+            z-index: 150000;
         }
     </style>
 </head>
@@ -170,10 +231,10 @@
     <div id="cursor-dot"></div>
 
     <div id="boot-screen">
-        <div class="boot-title-glitch" data-text="SYSTEM ADMIN">SYSTEM ADMIN</div>
-        <div class="text-purple-neon font-mono text-xs mt-4 tracking-[0.5em] animate-pulse">ESTABLISHING CONNECTION...</div>
+        <div class="boot-title-glitch" data-text="PORTAL ADMIN">PORTAL ADMIN</div>
+        <div class="text-purple-neon font-mono text-xs mt-4 tracking-[0.5em] animate-pulse">MEMULAI SESI...</div>
         <div class="w-64 h-1 bg-gray-900 mt-6 relative overflow-hidden rounded">
-            <div id="boot-bar" class="absolute top-0 left-0 h-full bg-purple-neon shadow-[0_0_10px_#d946ef] w-0 transition-all duration-[2000ms] ease-out"></div>
+            <div id="boot-bar" class="absolute top-0 left-0 h-full bg-purple-neon shadow-[0_0_10px_#d946ef] w-0 transition-all duration-2000 ease-out"></div>
         </div>
     </div>
 
@@ -181,7 +242,7 @@
         
         <header class="mb-12 flex justify-between items-end border-b border-white/10 pb-6">
             <div>
-                <h1 class="text-4xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-neon font-mono">
+                <h1 class="hero-title text-4xl md:text-5xl font-black tracking-tighter font-mono">
                     SELAMAT DATANG, ADMIN!
                 </h1>
                 <p class="text-xs font-mono text-cyan-neon mt-2 tracking-widest">ADMIN DASHBOARD</p>
@@ -207,7 +268,7 @@
         </header>
 
         @if(session('success'))
-        <div class="mb-8 holo-card border-l-4 !border-l-green-500 p-4 flex items-center gap-4 animate-pulse">
+        <div class="mb-8 holo-card border-l-4 border-l-green-500! p-4 flex items-center gap-4 animate-pulse">
             <i class="fas fa-check-circle text-green-500 text-xl"></i>
             <div>
                 <h4 class="font-mono text-green-500 text-xs uppercase tracking-widest">Success</h4>
@@ -249,8 +310,9 @@
                                     @method('PUT')
                                     
                                     <input type="text" name="password" placeholder="New Pass..." 
-                                           class="bg-transparent border-b border-white/10 w-24 text-xs focus:border-purple-neon focus:outline-none py-1 text-right text-gray-400 focus:text-white font-mono transition-colors"
-                                           required minlength="6">
+                                        class="bg-transparent border-b border-white/10 w-24 text-xs focus:border-purple-neon focus:outline-none py-1 text-right text-gray-400 focus:text-white font-mono transition-colors"
+                                        required minlength="8" maxlength="50">
+
                                     
                                     <button type="submit" class="text-xs hover:text-yellow-400 text-yellow-600 transition-colors font-mono" title="Simpan Password">
                                         [ SAVE ]
@@ -264,8 +326,16 @@
             </div>
         </div>
 
+        @php
+            $criteriaCount = $criterias->count();
+            $nextCodeNumber = $criteriaCount + 1;
+            $nextCode = 'C' . $nextCodeNumber;
+            $suggestNewWeight = $criteriaCount > 0 ? 1 / ($criteriaCount + 1) : 1;
+        @endphp
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
+            <!-- PANEL KANDIDAT -->
             <div class="holo-card rounded-xl flex flex-col">
                 <div class="p-4 border-b border-white/5 bg-blue-900/20 flex justify-between items-center">
                     <h3 class="font-bold font-mono text-cyan-neon flex items-center gap-2">
@@ -276,38 +346,68 @@
                 
                 <div class="p-6 flex-1">
                     
+                    <!-- FORM TAMBAH KANDIDAT -->
                     <form action="{{ route('admin.candidate.store') }}" method="POST" class="mb-8 grid grid-cols-4 gap-4 items-end">
                         @csrf
                         
                         <div class="col-span-2">
                             <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">NAMA KANDIDAT</label>
-                            <input type="text" name="name" placeholder="NAMA LENGKAP" class="tech-input w-full px-3 py-2 rounded text-sm uppercase" required>
+                            <input 
+                                type="text" 
+                                name="name" 
+                                placeholder="NAMA LENGKAP" 
+                                class="tech-input w-full px-3 py-2 rounded text-sm uppercase"
+                                required
+                                maxlength="60"
+                                oninput="this.value = this.value.toUpperCase().replace(/[^A-Z ]/g, '');"
+                            >
                         </div>
                         
                         <div>
                             <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">UMUR</label>
-                            <input type="number" name="age" placeholder="25" class="tech-input w-full px-3 py-2 rounded text-sm text-center" required>
+                            <div class="neon-select">
+                                <select 
+                                    name="age" 
+                                    class="tech-input w-full px-3 py-2 rounded text-sm text-center"
+                                    required
+                                >
+                                    @for($i = 18; $i <= 63; $i++)
+                                        <option value="{{ $i }}">{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
                         </div>
                         
                         <div class="flex gap-2">
                             <div class="flex-1">
                                 <label class="text-[10px] font-mono text-cyan-neon block mb-2 tracking-widest">EXP (THN)</label>
-                                <input type="number" name="experience_year" placeholder="3" class="tech-input w-full px-3 py-2 rounded text-sm text-center" required>
+                                <div class="neon-select">
+                                    <select 
+                                        name="experience_year" 
+                                        class="tech-input w-full px-3 py-2 rounded text-sm text-center"
+                                        required
+                                    >
+                                        @for($i = 3; $i <= 20; $i++)
+                                            <option value="{{ $i }}">{{ $i }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
                             </div>
-                            <button type="submit" class="tech-btn px-4 py-2 rounded text-xs h-[38px] self-end mb-[1px] hover:bg-cyan-neon hover:text-black hover:shadow-[0_0_15px_#00e5ff] border-cyan-neon text-cyan-neon">
+                            <button type="submit" class="tech-btn px-4 py-2 rounded text-xs h-[38px] self-end mb-px hover:bg-cyan-neon hover:text-black hover:shadow-[0_0_15px_#00e5ff] border-cyan-neon text-cyan-neon">
                                 <i class="fas fa-plus"></i>
                             </button>
                         </div>
                     </form>
 
+                    <!-- TABEL EDIT KANDIDAT -->
                     <div class="overflow-y-auto max-h-[300px] pr-2">
                         <table class="w-full tech-table text-sm">
                             <thead>
                                 <tr>
-                                    <th class="!text-cyan-neon">Nama</th>
-                                    <th class="!text-cyan-neon text-center">Umur</th>
-                                    <th class="!text-cyan-neon text-center">Exp</th>
-                                    <th class="text-right !text-cyan-neon">Aksi</th>
+                                    <th class="text-cyan-neon!">Nama</th>
+                                    <th class="text-cyan-neon! text-center">Umur</th>
+                                    <th class="text-cyan-neon! text-center">Exp</th>
+                                    <th class="text-right text-cyan-neon!">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -317,21 +417,46 @@
                                         @csrf @method('PUT')
                                         
                                         <td class="p-2">
-                                            <input type="text" name="name" value="{{ $cand->name }}" 
-                                                oninput="this.value = this.value.toUpperCase()"
-                                                class="bg-transparent border-none text-white w-full focus:ring-0 focus:text-cyan-neon font-mono text-xs transition-colors uppercase">
+                                            <input 
+                                                type="text" 
+                                                name="name" 
+                                                value="{{ $cand->name }}" 
+                                                class="bg-transparent border-none text-white w-full focus:ring-0 focus:text-cyan-neon font-mono text-xs transition-colors uppercase"
+                                                maxlength="60"
+                                                oninput="this.value = this.value.toUpperCase().replace(/[^A-Z ]/g, '');"
+                                            >
                                         </td>
 
                                         <td class="p-2">
-                                            <input type="number" name="age" value="{{ $cand->age }}" 
-                                                class="bg-transparent border-none text-gray-400 w-full focus:ring-0 focus:text-cyan-neon font-mono text-xs text-center transition-colors"
-                                                placeholder="0">
+                                            <div class="neon-select">
+                                                <select 
+                                                    name="age" 
+                                                    class="bg-transparent tech-input border border-white/10 rounded text-gray-200 w-full focus:ring-0 focus:text-cyan-neon font-mono text-xs text-center transition-colors"
+                                                    required
+                                                >
+                                                    @for($i = 18; $i <= 63; $i++)
+                                                        <option value="{{ $i }}" {{ $cand->age == $i ? 'selected' : '' }}>
+                                                            {{ $i }}
+                                                        </option>
+                                                    @endfor
+                                                </select>
+                                            </div>
                                         </td>
 
                                         <td class="p-2">
-                                            <input type="number" name="experience_year" value="{{ $cand->experience_year }}" 
-                                                class="bg-transparent border-none text-gray-400 w-full focus:ring-0 focus:text-cyan-neon font-mono text-xs text-center transition-colors"
-                                                placeholder="0">
+                                            <div class="neon-select">
+                                                <select 
+                                                    name="experience_year" 
+                                                    class="bg-transparent tech-input border border-white/10 rounded text-gray-200 w-full focus:ring-0 focus:text-cyan-neon font-mono text-xs text-center transition-colors"
+                                                    required
+                                                >
+                                                    @for($i = 3; $i <= 20; $i++)
+                                                        <option value="{{ $i }}" {{ $cand->experience_year == $i ? 'selected' : '' }}>
+                                                            {{ $i }}
+                                                        </option>
+                                                    @endfor
+                                                </select>
+                                            </div>
                                         </td>
 
                                         <td class="p-2 text-right flex justify-end gap-4 items-center">
@@ -354,6 +479,7 @@
                 </div>
             </div>
 
+            <!-- PANEL KRITERIA -->
             <div class="holo-card rounded-xl flex flex-col">
                 <div class="p-4 border-b border-white/5 bg-purple-900/20 flex justify-between items-center">
                     <h3 class="font-bold font-mono text-purple-neon flex items-center gap-2">
@@ -363,20 +489,51 @@
                 </div>
                 
                 <div class="p-6">
+                    <!-- FORM TAMBAH KRITERIA -->
                     <form action="{{ route('admin.criteria.store') }}" method="POST" class="mb-8 grid grid-cols-4 gap-2">
                         @csrf
-                        <input type="text" name="code" placeholder="C9" class="tech-input px-3 py-2 rounded text-sm text-center" required>
-                        <input type="text" name="name" placeholder="NAMA KRITERIA" class="tech-input col-span-2 px-3 py-2 rounded text-sm" required>
-                        <select name="type" class="tech-input px-3 py-2 rounded text-sm bg-black">
-                            <option value="benefit">BENEFIT</option>
-                            <option value="cost">COST</option>
-                        </select>
-                        <input type="number" step="0.01" name="weight" placeholder="BOBOT (0.1)" class="tech-input col-span-3 px-3 py-2 rounded text-sm" required>
+                        <input 
+                            type="text" 
+                            name="code" 
+                            value="{{ $nextCode }}" 
+                            class="tech-input px-3 py-2 rounded text-sm text-center font-mono tracking-widest"
+                            readonly
+                            pattern="^C[0-9]+$"
+                            title="Kode otomatis C diikuti angka"
+                        >
+                        <input 
+                            type="text" 
+                            name="name" 
+                            placeholder="NAMA KRITERIA" 
+                            class="tech-input col-span-2 px-3 py-2 rounded text-sm"
+                            required
+                            maxlength="60"
+                            oninput="this.value = this.value.replace(/[^A-Za-z ]/g,'');"
+                        >
+                        <div class="neon-select">
+                            <select name="type" class="tech-input px-3 py-2 rounded text-sm bg-black">
+                                <option value="benefit">BENEFIT</option>
+                                <option value="cost">COST</option>
+                            </select>
+                        </div>
+                        <input 
+                            type="number" 
+                            step="0.01" 
+                            min="0" 
+                            max="1" 
+                            name="weight" 
+                            id="new-criteria-weight"
+                            value="{{ number_format($suggestNewWeight, 4, '.', '') }}"
+                            placeholder="0.10" 
+                            class="tech-input col-span-3 px-3 py-2 rounded text-sm"
+                            required
+                        >
                         <button type="submit" class="tech-btn px-4 py-2 rounded text-xs flex justify-center items-center">
                             <i class="fas fa-plus"></i>
                         </button>
                     </form>
 
+                    <!-- TABEL EDIT KRITERIA -->
                     <div class="overflow-y-auto max-h-[300px] pr-2">
                         <table class="w-full tech-table text-sm">
                             <thead>
@@ -392,21 +549,60 @@
                                 <tr>
                                     <form action="{{ route('admin.criteria.update', $crit->id) }}" method="POST">
                                         @csrf @method('PUT')
-                                        <td class="font-mono font-bold text-purple-400">{{ $crit->code }}</td>
-                                        <td><input type="text" name="name" value="{{ $crit->name }}" class="bg-transparent border-b border-white/10 w-full text-xs focus:border-purple-neon focus:outline-none py-1"></td>
-                                        <td><input type="number" step="0.01" name="weight" value="{{ $crit->weight }}" class="bg-transparent border-b border-white/10 w-12 text-xs focus:border-purple-neon focus:outline-none py-1 text-center"></td>
+                                        <td class="font-mono font-bold text-purple-400">
+                                            C{{ $loop->iteration }}
+                                        </td>
+                                        <td>
+                                            <input 
+                                                type="text" 
+                                                name="name" 
+                                                value="{{ $crit->name }}" 
+                                                class="bg-transparent border-b border-white/10 w-full text-xs focus:border-purple-neon focus:outline-none py-1"
+                                                maxlength="60"
+                                                oninput="this.value = this.value.replace(/[^A-Za-z ]/g,'');"
+                                            >
+                                        </td>
+                                        <td>
+                                            <input 
+                                                type="number" 
+                                                step="0.01" 
+                                                min="0" 
+                                                max="1" 
+                                                name="weight" 
+                                                value="{{ number_format($crit->weight, 4, '.', '') }}" 
+                                                class="bg-transparent border-b border-white/10 w-16 text-xs focus:border-purple-neon focus:outline-none py-1 text-center criteria-weight-input"
+                                            >
+                                        </td>
                                         <td class="text-right flex justify-end gap-3 items-center pt-3">
-                                            <button type="submit" class="text-purple-400 hover:text-white transition-colors"><i class="fas fa-save"></i></button>
+                                            <button type="submit" class="text-purple-400 hover:text-white transition-colors">
+                                                <i class="fas fa-save"></i>
+                                            </button>
                                     </form>
                                             <form action="{{ route('admin.criteria.delete', $crit->id) }}" method="POST" onsubmit="return confirm('Hapus kriteria?')">
                                                 @csrf @method('DELETE')
-                                                <button type="submit" class="text-red-500 hover:text-red-400 transition-colors"><i class="fas fa-trash"></i></button>
+                                                <button type="submit" class="text-red-500 hover:text-red-400 transition-colors">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </form>
                                         </td>
                                 </tr>
                                 @endforeach
                             </tbody>
                         </table>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between text-[11px] font-mono">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-gray-400 tracking-widest">TOTAL BOBOT KRITERIA</span>
+                            <span id="total-weight-value" class="text-emerald-400 text-sm">0.0000</span>
+                        </div>
+                        <button 
+                            type="button" 
+                            onclick="autoNormalizeWeights()" 
+                            class="px-3 py-1 rounded border border-cyan-neon/60 text-[10px] font-mono tracking-widest text-cyan-neon hover:bg-cyan-neon/10 hover:shadow-[0_0_15px_#00e5ff]"
+                        >
+                            AUTO NORMALISASI
+                        </button>
                     </div>
                 </div>
             </div>
@@ -420,12 +616,13 @@
 
     </div>
 
-    <div id="shutdown-modal" class="fixed inset-0 z-[10000] hidden items-center justify-center backdrop-blur-sm bg-black/80 transition-opacity duration-300 opacity-0">
+    <!-- MODAL LOGOUT -->
+    <div id="shutdown-modal" class="fixed inset-0 hidden items-center justify-center backdrop-blur-sm bg-black/80 transition-opacity duration-300 opacity-0">
         
         <div class="holo-card border border-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.2)] p-1 max-w-sm w-full transform scale-90 transition-transform duration-300" id="modal-box">
             <div class="bg-[#0a0505]/90 p-6 relative overflow-hidden">
                 
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent"></div>
+                <div class="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-red-500 to-transparent"></div>
                 <div class="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
 
                 <div class="text-center mb-6 relative z-10">
@@ -470,7 +667,7 @@
             document.getElementById('clock').innerText = now.toLocaleTimeString('en-GB');
         }, 1000);
 
-        // --- 3. WARP DRIVE PARTICLES (PURPLE THEME) ---
+        // --- 3. WARP DRIVE PARTICLES ---
         const canvas = document.getElementById('warp-canvas');
         const ctx = canvas.getContext('2d');
         let width, height, stars = [], warpSpeed = 0.5;
@@ -540,7 +737,6 @@
 
         function toggleShutdown() {
             if (modal.classList.contains('hidden')) {
-                // Buka Modal
                 modal.classList.remove('hidden');
                 setTimeout(() => {
                     modal.classList.remove('opacity-0');
@@ -549,7 +745,6 @@
                     modalBox.classList.add('scale-100');
                 }, 10);
             } else {
-                // Tutup Modal
                 modal.classList.add('opacity-0');
                 modalBox.classList.remove('scale-100');
                 modalBox.classList.add('scale-90');
@@ -561,25 +756,102 @@
         }
 
         function confirmLogout() {
-            // Animasi visual sebelum submit
             const btn = event.currentTarget;
             btn.innerHTML = "DISCONNECTING...";
             
-            // Efek layar mati
             document.body.style.filter = "brightness(0) blur(10px)";
             document.body.style.transition = "all 0.5s";
 
-            // Submit form logout
             setTimeout(() => {
                 document.getElementById('logout-form').submit();
             }, 800);
         }
 
-        // Tutup modal jika klik di luar area box
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 toggleShutdown();
             }
+        });
+
+        // --- 6. LOGIKA BOBOT KRITERIA & NORMALISASI ---
+        function handleWeightInput(el) {
+            let v = el.value.replace(',', '.');
+            v = v.replace(/[^0-9.]/g, '');
+            const parts = v.split('.');
+            if (parts.length > 2) {
+                v = parts[0] + '.' + parts.slice(1).join('');
+            }
+            let num = parseFloat(v);
+            if (isNaN(num)) {
+                el.value = '';
+            } else {
+                if (num < 0) num = 0;
+                if (num > 1) num = 1;
+                el.value = num.toString();
+            }
+        }
+
+        function updateTotalWeight() {
+            const inputs = document.querySelectorAll('.criteria-weight-input');
+            let total = 0;
+            inputs.forEach(i => {
+                const val = parseFloat(i.value);
+                if (!isNaN(val)) total += val;
+            });
+            const display = document.getElementById('total-weight-value');
+            if (display) {
+                display.textContent = total.toFixed(4);
+                display.classList.remove('text-red-400', 'text-yellow-300', 'text-emerald-400');
+                if (Math.abs(total - 1) < 0.0001) {
+                    display.classList.add('text-emerald-400');
+                } else if (total > 1) {
+                    display.classList.add('text-red-400');
+                } else {
+                    display.classList.add('text-yellow-300');
+                }
+            }
+        }
+
+        function autoNormalizeWeights() {
+            const inputs = document.querySelectorAll('.criteria-weight-input');
+            const arr = [];
+            inputs.forEach(i => {
+                let v = parseFloat(i.value);
+                if (isNaN(v) || v < 0) v = 0;
+                arr.push({el: i, val: v});
+            });
+            const n = arr.length;
+            if (!n) return;
+            let total = arr.reduce((s,w) => s + w.val, 0);
+
+            if (total <= 0) {
+                const equal = 1 / n;
+                arr.forEach(w => w.el.value = equal.toFixed(4));
+            } else {
+                arr.forEach(w => {
+                    const norm = w.val / total;
+                    w.el.value = norm.toFixed(4);
+                });
+            }
+            updateTotalWeight();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.criteria-weight-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    handleWeightInput(this);
+                    updateTotalWeight();
+                });
+            });
+
+            const newWeight = document.getElementById('new-criteria-weight');
+            if (newWeight) {
+                newWeight.addEventListener('input', function() {
+                    handleWeightInput(this);
+                });
+            }
+
+            autoNormalizeWeights();
         });
     </script>
 </body>

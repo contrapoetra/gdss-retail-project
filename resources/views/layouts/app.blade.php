@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GDSS RETAIL // @yield('title', 'SYSTEM')</title>
+    <title>GDSS RETAIL</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@200;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -85,7 +85,6 @@
         .nav-item i { font-size: 1.4rem; margin-bottom: 6px; transition: transform 0.3s; text-shadow: 0 0 0 transparent; }
         .nav-item span { font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 1px; font-weight: bold; opacity: 0.7;}
 
-        /* Hover & Active States - COLORFUL NEON */
         .nav-item.cyan:hover, .nav-item.cyan.active { color: #00e5ff; }
         .nav-item.cyan:hover i, .nav-item.cyan.active i { text-shadow: 0 0 15px #00e5ff; transform: translateY(-4px); }
         
@@ -102,7 +101,6 @@
         }
         .nav-item.active::after { opacity: 1; width: 20px; height: 1px; border-radius: 0; bottom: 0; }
 
-
         /* --- SPOTLIGHT LOGOUT BUTTON --- */
         .spotlight-btn {
             position: relative;
@@ -110,7 +108,7 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
             border-radius: 8px;
             overflow: hidden;
-            cursor: none;
+            cursor: pointer;
             transition: border-color 0.3s;
             display: flex; align-items: center; justify-content: center; gap: 10px;
             padding: 0 25px;
@@ -146,10 +144,6 @@
 
         .spotlight-btn:hover::before { opacity: 1; }
 
-        /* ========================================= */
-        /* ===  RGB NEON GRADIENT ANIMATIONS     === */
-        /* ========================================= */
-
         @keyframes rgb-flow {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -174,7 +168,6 @@
             100% { background-color: #ff0000; }
         }
 
-        /* 1. GRADIENT TEXT (Header) */
         .rgb-text-gradient {
             background: linear-gradient(270deg, #ff0000, #ff00ff, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000);
             background-size: 400% 400%;
@@ -184,7 +177,6 @@
             animation: rgb-flow 5s ease infinite;
         }
 
-        /* 2. RGB BAR (Transition & Header Line) */
         .rgb-bar-gradient {
             background: linear-gradient(90deg, #ff0000, #ff00ff, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000);
             background-size: 200% 200%;
@@ -192,17 +184,14 @@
             box-shadow: 0 0 10px rgba(255,255,255,0.2);
         }
 
-        /* 3. RGB BORDER (Cursor & Avatar) */
         .rgb-border-anim {
             animation: rgb-border 4s linear infinite;
         }
 
-        /* 4. RGB FILL (Cursor Dot) */
         .rgb-fill-anim {
             animation: rgb-bg-cycle 4s linear infinite;
         }
 
-        /* --- BOOT SCREEN --- */
         #boot-screen {
             position: fixed; inset: 0; background: #05000a; z-index: 9999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -214,17 +203,18 @@
         .boot-title-glitch::before { left: 2px; text-shadow: -1px 0 var(--secondary); animation: glitch 2s infinite; content: attr(data-text); position: absolute; top: 0; width: 100%; height: 100%; background: #05000a;}
         .boot-title-glitch::after { left: -2px; text-shadow: -1px 0 var(--primary); animation: glitch 3s infinite; content: attr(data-text); position: absolute; top: 0; width: 100%; height: 100%; background: #05000a;}
 
-        /* --- RGB CURSOR --- */
         #cursor {
             position: fixed; top: 0; left: 0; width: 20px; height: 20px;
             border: 1px solid white; border-radius: 50%;
             transform: translate(-50%, -50%); pointer-events: none; 
-            z-index: 99999; transition: width 0.2s, height 0.2s; mix-blend-mode: difference;
+            z-index: 999999;      /* FIX: selalu di atas */
+            transition: width 0.2s, height 0.2s; mix-blend-mode: difference;
         }
         #cursor-dot {
             position: fixed; top: 0; left: 0; width: 4px; height: 4px;
             background: white; border-radius: 50%; transform: translate(-50%, -50%);
-            pointer-events: none; z-index: 99999;
+            pointer-events: none; 
+            z-index: 999999;
         }
         .cursor-hover { width: 50px !important; height: 50px !important; background-color: rgba(255, 255, 255, 0.1); }
     </style>
@@ -233,28 +223,27 @@
 
     <div class="scanlines"></div>
     <div class="vignette"></div>
-    <canvas id="warp-canvas" class="fixed inset-0 z-0"></canvas>
-    
+    <canvas id="warp-canvas" class="fixed inset-0 -z-20"></canvas>
+
     <div id="cursor" class="rgb-border-anim"></div>
     <div id="cursor-dot" class="rgb-fill-anim"></div>
 
     <div id="boot-screen">
         <div class="boot-title-glitch" data-text="GDSS RETAIL">GDSS RETAIL</div>
-        <div class="rgb-text-gradient font-mono text-xs mt-4 tracking-[0.5em] animate-pulse">SYSTEM LOADING...</div>
+        <div class="rgb-text-gradient font-mono text-xs mt-4 tracking-[0.5em] animate-pulse">INISIALISASI...</div>
         <div class="w-64 h-1 bg-gray-900 mt-6 relative overflow-hidden rounded">
-            <div id="boot-bar" class="absolute top-0 left-0 h-full rgb-bar-gradient w-0 transition-all duration-[2000ms] ease-out"></div>
+            <div id="boot-bar" class="absolute top-0 left-0 h-full rgb-bar-gradient w-0 transition-all duration-2000 ease-out"></div>
         </div>
     </div>
 
     <div id="main-interface" class="opacity-0 transition-opacity duration-1000 flex flex-col h-screen overflow-hidden relative z-10">
 
         <header class="h-20 fixed top-0 w-full z-50 flex justify-between items-center px-8 bg-[#05000a]/90 backdrop-blur-sm border-b border-white/5">
-            
             <div class="flex items-center gap-3">
                 <div class="h-8 w-1 rgb-bar-gradient"></div>
                 <div>
                     <h1 class="text-2xl font-black font-mono tracking-tighter rgb-text-gradient">GDSS</h1>
-                    <p class="text-[10px] rgb-text-gradient tracking-[0.3em] -mt-1 opacity-80">DECISION SUPPORT</p>
+                    <p class="text-[10px] rgb-text-gradient tracking-[0.3em] -mt-1 opacity-80">DECISION MAKER</p>
                 </div>
             </div>
 
@@ -280,11 +269,9 @@
         </main>
 
         <nav class="glass-nav h-24 fixed bottom-0 w-full z-50 px-8 flex items-center justify-between">
-            
             <div class="w-32 hidden md:block"></div>
 
             <div class="flex flex-1 justify-center items-center gap-8 md:gap-16">
-                
                 <a href="{{ url('/dashboard/' . (Auth::user()->role == 'area_manager' ? 'area' : (Auth::user()->role == 'store_manager' ? 'store' : 'hr'))) }}" 
                    class="nav-item cyan {{ Request::is('dashboard*') ? 'active' : '' }}">
                     <i class="fas fa-tachometer-alt"></i>
@@ -304,7 +291,6 @@
                     <span>Konsensus</span>
                 </a>
                 @endif
-
             </div>
 
             <div class="w-auto flex justify-end border-l border-white/10 pl-8 ml-4">
@@ -319,25 +305,45 @@
 
     </div>
 
-    <div id="shutdown-modal" class="fixed inset-0 z-[10000] hidden items-center justify-center backdrop-blur-sm bg-black/80 transition-opacity duration-300 opacity-0">
-        <div class="border border-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.2)] p-1 max-w-sm w-full transform scale-90 transition-transform duration-300" id="modal-box" style="background: #0a0505;">
+    {{-- MODAL LOGOUT: z-index SANGAT TINGGI --}}
+    <div id="shutdown-modal"
+         class="fixed inset-0 hidden items-center justify-center backdrop-blur-sm bg-black/80 transition-opacity duration-300 opacity-0 z-[99998]">
+        <div id="modal-box"
+             class="border border-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.3)] p-1 max-w-sm w-full transform scale-90 transition-transform duration-300 relative z-[99999]"
+             style="background:#0a0505;">
             <div class="p-6 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent"></div>
+                <div class="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-red-500 to-transparent"></div>
+                
                 <div class="text-center mb-6 relative z-10">
                     <i class="fas fa-power-off text-4xl text-red-500 animate-pulse mb-4"></i>
-                    <h3 class="font-mono text-xl font-bold text-white tracking-tighter">PEMBERITAHUAN</h3>
-                    <p class="font-mono text-[10px] text-red-400 tracking-[0.2em] mt-2">Tetap ingin logout?</p>
+                    <h3 class="font-mono text-xl font-bold text-white tracking-tighter">
+                        KONFIRMASI LOGOUT
+                    </h3>
+                    <p class="font-mono text-[10px] text-red-400 tracking-[0.2em] mt-2 uppercase">
+                        Anda yakin ingin keluar dari sesi ini?
+                    </p>
                 </div>
+
                 <div class="flex gap-3 relative z-10">
-                    <button onclick="toggleShutdown()" class="flex-1 py-3 border border-gray-700 text-gray-400 font-mono text-xs hover:bg-gray-800 hover:text-white transition-colors uppercase">Batal</button>
-                    <button onclick="confirmLogout()" class="flex-1 py-3 bg-red-600 text-black font-bold font-mono text-xs hover:bg-red-500 hover:shadow-[0_0_20px_rgba(220,38,38,0.6)] transition-all tracking-wider uppercase">Logout</button>
+                    <button 
+                        type="button"
+                        onclick="toggleShutdown()" 
+                        class="flex-1 py-3 border border-gray-700 text-gray-400 font-mono text-xs hover:bg-gray-800 hover:text-white transition-colors uppercase tracking-widest">
+                        Batal
+                    </button>
+                    <button 
+                        type="button"
+                        onclick="confirmLogout()" 
+                        class="flex-1 py-3 bg-red-600 text-black font-bold font-mono text-xs hover:bg-red-500 hover:shadow-[0_0_20px_rgba(220,38,38,0.6)] transition-all tracking-widest uppercase">
+                        Logout
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 1. BOOT ANIMATION
+        // BOOT
         window.addEventListener('load', () => {
             const bootBar = document.getElementById('boot-bar');
             const bootScreen = document.getElementById('boot-screen');
@@ -350,7 +356,7 @@
             }, 1500);
         });
 
-        // 2. WARP DRIVE BACKGROUND
+        // WARP BG
         const canvas = document.getElementById('warp-canvas');
         const ctx = canvas.getContext('2d');
         let width, height, stars = [], warpSpeed = 0.2;
@@ -383,17 +389,23 @@
         }
         drawStars();
 
-        // 3. MAGNETIC CURSOR
+        // CURSOR
         const cursor = document.getElementById('cursor');
         const cursorDot = document.getElementById('cursor-dot');
         let mouseX = 0, mouseY = 0, cursorX = 0, cursorY = 0;
-        document.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; cursorDot.style.left = mouseX + 'px'; cursorDot.style.top = mouseY + 'px'; });
-        function animateCursor() {
-            cursorX += (mouseX - cursorX) * 0.15; cursorY += (mouseY - cursorY) * 0.15;
-            cursor.style.left = cursorX + 'px'; cursor.style.top = cursorY + 'px';
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX; mouseY = e.clientY;
+            cursorDot.style.left = mouseX + 'px'; 
+            cursorDot.style.top  = mouseY + 'px';
+        });
+        (function animateCursor() {
+            cursorX += (mouseX - cursorX) * 0.15; 
+            cursorY += (mouseY - cursorY) * 0.15;
+            cursor.style.left = cursorX + 'px'; 
+            cursor.style.top  = cursorY + 'px';
             requestAnimationFrame(animateCursor);
-        }
-        animateCursor();
+        })();
+
         document.body.addEventListener('mouseover', (e) => {
             if (e.target.closest('a, button, .nav-item')) {
                 cursor.classList.add('cursor-hover');
@@ -402,7 +414,7 @@
             }
         });
 
-        // 4. SPOTLIGHT EFFECT FOR LOGOUT BUTTON
+        // SPOTLIGHT LOGOUT BTN
         const spotlightBtn = document.querySelector('.spotlight-btn');
         if(spotlightBtn) {
             spotlightBtn.addEventListener('mousemove', (e) => {
@@ -414,28 +426,47 @@
             });
         }
 
-        // 5. MODAL LOGIC
+        // MODAL LOGIC
         const modal = document.getElementById('shutdown-modal');
         const modalBox = document.getElementById('modal-box');
+
         function toggleShutdown() {
             if (modal.classList.contains('hidden')) {
                 modal.classList.remove('hidden');
+                modal.classList.add('opacity-0');
+                modalBox.classList.remove('scale-100');
+                modalBox.classList.add('scale-90');
+
                 setTimeout(() => {
-                    modal.classList.remove('opacity-0'); modal.classList.add('flex');
-                    modalBox.classList.remove('scale-90'); modalBox.classList.add('scale-100');
+                    modal.classList.remove('opacity-0');
+                    modal.classList.add('flex');
+                    modalBox.classList.remove('scale-90');
+                    modalBox.classList.add('scale-100');
                 }, 10);
             } else {
                 modal.classList.add('opacity-0');
-                modalBox.classList.remove('scale-100'); modalBox.classList.add('scale-90');
-                setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
+                modalBox.classList.remove('scale-100');
+                modalBox.classList.add('scale-90');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
             }
         }
+        window.toggleShutdown = toggleShutdown;
+
         function confirmLogout() {
             document.body.style.filter = "brightness(0) blur(10px)";
             document.body.style.transition = "all 0.5s";
-            setTimeout(() => { document.getElementById('logout-form').submit(); }, 800);
+            setTimeout(() => {
+                document.getElementById('logout-form').submit();
+            }, 800);
         }
-        modal.addEventListener('click', (e) => { if (e.target === modal) toggleShutdown(); });
+        window.confirmLogout = confirmLogout;
+
+        modal.addEventListener('click', (e) => { 
+            if (e.target === modal) toggleShutdown(); 
+        });
     </script>
 </body>
 </html>

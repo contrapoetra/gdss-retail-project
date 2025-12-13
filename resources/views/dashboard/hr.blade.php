@@ -34,14 +34,14 @@
 
         <div class="p-6 md:p-10 relative">
             {{-- Decorative Scanline --}}
-            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-orange-500/5 to-transparent opacity-30 pointer-events-none animate-[scan_4s_ease-in-out_infinite]"></div>
+            <div class="absolute inset-0 bg-linear-to-b from-transparent via-orange-500/5 to-transparent opacity-30 pointer-events-none animate-[scan_4s_ease-in-out_infinite]"></div>
             
             <div class="relative z-10">
                 <h2 class="text-4xl md:text-5xl font-black text-white mb-4 font-sans tracking-tighter">
-                    HALO, <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-500 to-red-500 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">{{ strtoupper(Auth::user()->name) }}</span>
+                    HALO, <span class="text-transparent bg-clip-text bg-linear-to-r from-orange-400 via-amber-500 to-red-500 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">{{ strtoupper(Auth::user()->name) }}</span>
                 </h2>
                 
-                <div class="w-full h-px bg-gradient-to-r from-orange-500/50 via-red-500/20 to-transparent my-6"></div>
+                <div class="w-full h-px bg-linear-to-r from-orange-500/50 via-red-500/20 to-transparent my-6"></div>
 
                 <div class="grid md:grid-cols-3 gap-8">
                     {{-- Kolom Kiri: Deskripsi --}}
@@ -59,7 +59,7 @@
                     <div class="hidden md:flex justify-end items-center opacity-80">
                         <div class="relative">
                             <div class="absolute inset-0 bg-orange-500 blur-3xl opacity-20 animate-pulse"></div>
-                            <i class="fas fa-user-shield text-8xl text-gradient bg-clip-text text-transparent bg-gradient-to-b from-orange-400 to-transparent opacity-50"></i>
+                            <i class="fas fa-user-shield text-8xl text-gradient bg-clip-text text-transparent bg-linear-to-b from-orange-400 to-transparent opacity-50"></i>
                         </div>
                     </div>
                 </div>

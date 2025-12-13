@@ -7,30 +7,51 @@ use App\Models\BordaResult;
 use App\Models\ConsensusLog;
 use App\Models\User;
 use App\Models\Candidate;
+use App\Models\Evaluation; // Tambahkan ini
 use Illuminate\Support\Facades\DB;
 
 class BordaService
 {
+    protected $topsisService;
+
+    // Inject TopsisService agar bisa dipanggil otomatis
+    public function __construct(TopsisService $topsisService)
+    {
+        $this->topsisService = $topsisService;
+    }
+
     public function calculateConsensus($userId)
     {
-        // 1. Validasi: Hanya Area Manager (Role Tertinggi) yang boleh klik
+        // 1. Validasi: Hanya Area Manager
         $user = User::find($userId);
         if ($user->role !== 'area_manager') {
             throw new \Exception("Akses Ditolak. Hanya Area Manager yang bisa memicu konsensus.");
         }
 
-        // 2. Ambil Hasil TOPSIS dari Semua User
-        // Kita butuh memastikan minimal ada data dari para DM
+        // === [FIX UTAMA: AUTO-CALCULATE TOPSIS] ===
+        // Sebelum Borda jalan, kita wajib hitung TOPSIS untuk setiap user yang sudah input nilai.
+        
+        // Ambil ID semua user yang sudah melakukan evaluasi
+        $evaluatorIds = Evaluation::select('user_id')->distinct()->pluck('user_id');
+
+        if ($evaluatorIds->isEmpty()) {
+            throw new \Exception("Data Kosong: Belum ada Decision Maker yang melakukan penilaian.");
+        }
+
+        // Hitung ulang TOPSIS untuk masing-masing user tersebut
+        foreach ($evaluatorIds as $eid) {
+            $this->topsisService->calculateByUser($eid);
+        }
+        // ==========================================
+
+        // 2. Ambil Hasil TOPSIS yang BARU SAJA dihitung
         $topsisResults = TopsisResult::all();
 
         if ($topsisResults->isEmpty()) {
-            throw new \Exception("Belum ada data penilaian dari Decision Maker.");
+            throw new \Exception("Gagal menghitung TOPSIS. Pastikan data kriteria dan bobot lengkap.");
         }
 
         // 3. Algoritma Borda Count
-        // Rumus: Poin = (Total Kandidat - Ranking + 1)
-        // Contoh: Ada 10 Kandidat. Juara 1 dapat 10 poin. Juara 10 dapat 1 poin.
-        
         $totalCandidates = Candidate::count();
         $bordaScores = [];
 
@@ -38,10 +59,10 @@ class BordaService
             $candidateId = $result->candidate_id;
             $rank = $result->rank;
 
-            // Hitung poin berdasarkan ranking
+            // Rumus: Poin = (Total Kandidat - Ranking + 1)
+            // Ranking 1 dapat poin maksimal, Ranking terakhir dapat 1 poin
             $points = $totalCandidates - $rank + 1;
 
-            // Akumulasi poin ke kandidat tersebut
             if (!isset($bordaScores[$candidateId])) {
                 $bordaScores[$candidateId] = 0;
             }
@@ -51,13 +72,12 @@ class BordaService
         // 4. Simpan Hasil ke Database
         DB::beginTransaction();
         try {
-            // Catat Log: Siapa yang melakukan konsensus & Kapan
+            // Buat Log Baru
             $log = ConsensusLog::create([
                 'triggered_by' => $userId
             ]);
 
-            // Simpan Detail Nilai Borda & Ranking Final
-            // Sort array scores dari tertinggi ke terendah (Descending)
+            // Sort skor dari tertinggi ke terendah
             arsort($bordaScores);
 
             $finalRank = 1;
@@ -71,10 +91,11 @@ class BordaService
             }
 
             DB::commit();
-            return $log->id; // Kembalikan ID Log untuk ditampilkan
+            return $log->id;
+
         } catch (\Exception $e) {
             DB::rollBack();
-            throw $e;
+            throw $e; // Lempar error asli agar terbaca di Controller
         }
     }
 }

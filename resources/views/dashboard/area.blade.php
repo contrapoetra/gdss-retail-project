@@ -6,7 +6,7 @@
 @section('content')
 
     {{-- GLOBAL BACKGROUND GRID EFFECT --}}
-    <div class="fixed inset-0 pointer-events-none z-0" 
+    <div class="fixed inset-0 pointer-events-none -z-10" 
          style="background-image: linear-gradient(rgba(6, 182, 212, 0.05) 1px, transparent 1px), 
          linear-gradient(90deg, rgba(6, 182, 212, 0.05) 1px, transparent 1px); 
          background-size: 30px 30px; mask-image: radial-gradient(circle, black 60%, transparent 100%);">
@@ -34,14 +34,14 @@
 
         <div class="p-6 md:p-10 relative">
             {{-- Decorative Scanline --}}
-            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent opacity-30 pointer-events-none animate-[scan_4s_ease-in-out_infinite]"></div>
+            <div class="absolute inset-0 bg-linear-to-b from-transparent via-cyan-500/5 to-transparent opacity-30 pointer-events-none animate-[scan_4s_ease-in-out_infinite]"></div>
             
             <div class="relative z-10">
                 <h2 class="text-4xl md:text-5xl font-black text-white mb-4 font-sans tracking-tighter">
-                    HALO, <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-500 to-purple-500 drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]">{{ strtoupper(Auth::user()->name) }}</span>
+                    HALO, <span class="text-transparent bg-clip-text bg-linear-to-r from-cyan-300 via-blue-500 to-purple-500 drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]">{{ strtoupper(Auth::user()->name) }}</span>
                 </h2>
                 
-                <div class="w-full h-px bg-gradient-to-r from-cyan-500/50 via-blue-500/20 to-transparent my-6"></div>
+                <div class="w-full h-px bg-linear-to-r from-cyan-500/50 via-blue-500/20 to-transparent my-6"></div>
 
                 <div class="grid md:grid-cols-3 gap-8">
                     {{-- Kolom Kiri: Identitas --}}
@@ -156,7 +156,7 @@
         {{-- CARD 3: KEPUTUSAN FINAL --}}
         <div class="holo-card rounded-lg p-6 border border-amber-500/30 bg-[#0f172a]/80 backdrop-blur-sm relative group overflow-hidden hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300">
             {{-- Gold Gradient Overlay --}}
-            <div class="absolute inset-0 bg-gradient-to-tr from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div class="absolute inset-0 bg-linear-to-tr from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             
             <div class="flex flex-col h-full justify-between relative z-10">
                 <div class="flex items-start justify-between mb-4">

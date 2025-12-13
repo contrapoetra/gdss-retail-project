@@ -144,7 +144,7 @@
         <div class="rgb-gradient-text text-6xl font-black tracking-tighter mb-4">SYSTEM BOOT</div>
         <div class="text-xs font-mono text-gray-500 tracking-[0.5em] animate-pulse">LOADING LARAVEL ENVIRONMENT...</div>
         <div class="w-64 h-1 bg-gray-800 mt-6 relative overflow-hidden rounded-full">
-            <div id="boot-bar" class="absolute top-0 left-0 h-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] w-0 transition-all duration-[2000ms] ease-out"></div>
+            <div id="boot-bar" class="absolute top-0 left-0 h-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] w-0 transition-all duration-2000 ease-out"></div>
         </div>
     </div>
 
@@ -177,7 +177,7 @@
         <div class="holo-card rounded-2xl p-1 w-full max-w-4xl mx-4 lg:mx-0 relative group">
             <div class="bg-black/80 backdrop-blur-xl rounded-xl p-8 md:p-12 border border-white/5 relative z-10 overflow-hidden">
                 
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                <div class="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-white/20 to-transparent"></div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     
@@ -202,7 +202,7 @@
                             </p>
                         </div>
 
-                        <div class="h-px w-full bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+                        <div class="h-px w-full bg-linear-to-r from-transparent via-white/30 to-transparent"></div>
 
                         <div class="flex gap-4 font-mono text-xs">
                              <a href="https://laravel.com/docs" target="_blank" class="flex items-center gap-2 hover:text-white text-gray-400 transition-colors">
@@ -217,7 +217,7 @@
                     </div>
 
                     <div class="relative">
-                        <div class="absolute -inset-4 bg-gradient-to-r from-pink-600 to-purple-600 opacity-20 blur-2xl rounded-full animate-pulse"></div>
+                        <div class="absolute -inset-4 bg-linear-to-r from-pink-600 to-purple-600 opacity-20 blur-2xl rounded-full animate-pulse"></div>
                         
                         <div class="relative space-y-3">
                             <a href="https://laravel-news.com" class="block group">

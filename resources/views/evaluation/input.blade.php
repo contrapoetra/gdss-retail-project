@@ -61,7 +61,7 @@
 
         <div class="p-6 border-b border-emerald-500/10 relative overflow-hidden">
             {{-- Header Decorative Scanline --}}
-            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/5 to-transparent translate-x-[-100%] animate-[shimmer_3s_infinite]"></div>
+            <div class="absolute inset-0 bg-linear-to-r from-transparent via-emerald-500/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite]"></div>
             
             <div class="relative z-10 flex justify-between items-end">
                 <div>
@@ -71,7 +71,7 @@
                     </h3>
                     <p class="text-xs font-mono text-gray-400 mt-2 max-w-2xl leading-relaxed">
                         <span class="text-emerald-500">>></span> INSTRUKSI: Input nilai matriks berdasarkan observasi lapangan.
-                        <br><span class="text-emerald-500">>></span> RENTANG: <span class="text-white font-bold">1 (Sangat Buruk)</span> s/d <span class="text-white font-bold">5 (Sangat Baik)</span>.
+                        <br><span class="text-emerald-500">>></span> RENTANG: <span class="text-white font-bold">1 (Sangat Kurang)</span> s/d <span class="text-white font-bold">5 (Sangat Baik)</span>.
                     </p>
                 </div>
                 <div class="hidden md:block">
@@ -86,8 +86,8 @@
             @csrf
             
             {{-- Decorative Lines --}}
-            <div class="absolute top-0 left-6 w-px h-full bg-gradient-to-b from-emerald-500/20 to-transparent"></div>
-            <div class="absolute top-0 right-6 w-px h-full bg-gradient-to-b from-emerald-500/20 to-transparent"></div>
+            <div class="absolute top-0 left-6 w-px h-full bg-linear-to-b from-emerald-500/20 to-transparent"></div>
+            <div class="absolute top-0 right-6 w-px h-full bg-linear-to-b from-emerald-500/20 to-transparent"></div>
 
             <div class="overflow-x-auto relative z-10 rounded border border-emerald-500/20 shadow-inner bg-[#050b14]">
                 <table class="w-full border-collapse text-sm">
@@ -129,8 +129,8 @@
                                         <select name="scores[{{ $candidate->id }}][{{ $criteria->id }}]" 
                                                 class="w-full p-2 pl-3 bg-[#0a101e] border border-emerald-500/30 text-gray-200 rounded text-xs font-mono focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 focus:shadow-[0_0_10px_rgba(16,185,129,0.3)] focus:outline-none transition-all appearance-none hover:border-emerald-500/60 cursor-pointer" required>
                                             <option value="" disabled selected class="text-gray-600">- INPUT -</option>
-                                            <option value="1" class="bg-gray-900 text-red-400 font-bold">1 - [SANGAT BURUK]</option>
-                                            <option value="2" class="bg-gray-900 text-orange-400">2 - [BURUK]</option>
+                                            <option value="1" class="bg-gray-900 text-red-400 font-bold">1 - [SANGAT KURANG]</option>
+                                            <option value="2" class="bg-gray-900 text-orange-400">2 - [KURANG]</option>
                                             <option value="3" class="bg-gray-900 text-yellow-400">3 - [CUKUP]</option>
                                             <option value="4" class="bg-gray-900 text-blue-400">4 - [BAIK]</option>
                                             <option value="5" class="bg-gray-900 text-emerald-400 font-bold">5 - [SANGAT BAIK]</option>
@@ -151,7 +151,7 @@
                 @if($hasEvaluated)
                     <div class="px-4 py-2 bg-amber-500/10 border border-amber-500/50 rounded flex items-center gap-3 text-amber-400 text-xs font-mono">
                         <i class="fas fa-exclamation-triangle animate-pulse"></i> 
-                        <span>WARNING: DATA OVERWRITE DETECTED. SUBMITTING WILL REPLACE PREVIOUS RECORDS.</span>
+                        <span>PERINGATAN: TERDETEKSI DATA TIMPA. MENYIMPAN AKAN MENGGANTI REKAM SEBELUMNYA</span>
                     </div>
                 @endif
                 

@@ -1,447 +1,657 @@
 @extends('layouts.app')
 
 @section('title', 'Hasil Konsensus')
-@section('header', 'HASIL KEPUTUSAN KELOMPOK (BORDA)')
+@section('header', 'SYSTEM_CONSENSUS_RESULT')
 
 @section('content')
+
+    {{-- 1. LOAD LIBRARY EKSTERNAL --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="//unpkg.com/alpinejs" defer></script>
+    {{-- [ADD] LIBRARY HTML2PDF --}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    {{-- CSS UTAMA (PRINT & SCREEN) --}}
+    {{-- 2. STYLE --}}
     <style>
-        /* === STYLE KHUSUS CETAK (TIDAK DIUBAH - FORMAL) === */
+        /* A. ANIMASI & EFEK VISUAL TAMBAHAN (SCREEN ONLY) */
+        @media screen {
+            /* 1. Slide Up Animation */
+            @keyframes slideUpFade {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-slide-up {
+                animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+            
+            /* 2. Staggered Delay (untuk elemen yang muncul berurutan) */
+            .delay-100 { animation-delay: 0.1s; opacity: 0; animation-fill-mode: forwards; }
+            .delay-200 { animation-delay: 0.2s; opacity: 0; animation-fill-mode: forwards; }
+            .delay-300 { animation-delay: 0.3s; opacity: 0; animation-fill-mode: forwards; }
+
+            /* 3. Floating Animation (untuk Piala) */
+            @keyframes floating {
+                0% { transform: translateY(0px); }
+                50% { transform: translateY(-10px); }
+                100% { transform: translateY(0px); }
+            }
+            .animate-float {
+                animation: floating 4s ease-in-out infinite;
+            }
+
+            /* 4. Cyberpunk Corner Brackets */
+            .cyber-corners {
+                position: relative;
+                clip-path: polygon(
+                    0 0, 100% 0, 100% 100%, 0 100%
+                );
+            }
+            .cyber-corners::before, .cyber-corners::after {
+                content: ''; position: absolute; width: 20px; height: 20px;
+                border: 2px solid rgba(234, 179, 8, 0.6); transition: all 0.3s ease;
+            }
+            .cyber-corners::before { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+            .cyber-corners::after { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+            .cyber-corners:hover::before, .cyber-corners:hover::after {
+                width: 100%; height: 100%; border-color: rgba(234, 179, 8, 1);
+                box-shadow: 0 0 15px rgba(234, 179, 8, 0.3) inset;
+            }
+        }
+
+        /* B. STYLE KHUSUS CETAK (PRINT ONLY) - ORIGINAL PRESERVED */
         @media print {
-            .no-print, nav, header, aside, .sidebar, .bg-gray-900, button, .main-content > div:first-child, .sci-fi-bg, .scanline-overlay { 
-                display: none !important; 
-            }
-            body, .main-content, .bg-gray-100, .holo-card, .tech-border { 
-                background-color: white !important; 
-                color: black !important;
-                margin: 0; padding: 0;
-                border: none !important;
-                box-shadow: none !important;
-            }
-            .text-white, .text-yellow-400, .text-gray-400, .text-cyan-400, .text-amber-500 {
-                color: black !important;
-            }
-            .grid-print { display: block !important; page-break-inside: avoid; }
-            .col-print {
-                width: 100% !important; margin-bottom: 20px;
-                background: white !important; border: 1px solid #ddd !important;
-            }
-            canvas { max-width: 100% !important; max-height: 400px !important; }
-            .print-header {
-                display: block !important; text-align: center; margin-bottom: 30px;
-                border-bottom: 3px double black; padding-bottom: 10px;
-            }
-            .signature-section {
-                display: flex !important; justify-content: space-between; margin-top: 50px; page-break-inside: avoid;
-            }
-            table { width: 100% !important; border-collapse: collapse; font-size: 12px; }
-            th, td { border: 1px solid black !important; padding: 8px; color: black !important; }
-            thead { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
-            .shadow, .rounded-lg, .border-l-4, .border-yellow-500, .border-cyan-500 {
-                box-shadow: none !important; border-radius: 0 !important; border: none !important;
-            }
-            .hud-corner, .scanline, .animate-pulse, .absolute, .tech-accent { display: none !important; }
+            @page { size: auto; margin: 15mm; }
+            body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact; }
+            .no-print, nav, header, aside, .sidebar, button, .shadow, .bg-gray-900, .fixed, .z-0 { display: none !important; }
+            .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; background: white !important; }
+            .grid-print { display: block !important; width: 100%; }
+            .col-print { width: 100% !important; page-break-inside: avoid; border: none !important; box-shadow: none !important; margin-bottom: 2rem; background: white !important; }
+            h1, h2, h3, h4 { color: black !important; }
+            table { width: 100% !important; border-collapse: collapse; font-size: 12px; color: black !important; }
+            th, td { border: 1px solid #000 !important; padding: 6px; color: black !important; }
+            thead th { background-color: #e5e7eb !important; color: #000 !important; font-weight: bold; }
+            .print-header { display: block !important; text-align: center; border-bottom: 3px double #000; margin-bottom: 20px; padding-bottom: 10px; }
+            .signature-section { display: flex !important; justify-content: space-between; margin-top: 50px; page-break-inside: avoid; }
+            canvas { max-height: 350px !important; width: 100% !important; }
+            .badge-print { border: 1px solid #000; color: #000 !important; background: none !important; padding: 2px 8px; border-radius: 10px; }
+            /* Reset warna teks cyberpunk saat print */
+            .text-yellow-400, .text-yellow-500, .text-gray-400 { color: black !important; }
         }
         .print-header, .signature-section { display: none; }
 
-        /* === STYLE LAYAR (CYBERPUNK YELLOW) === */
-        .sci-fi-bg {
-            background-image: 
-                linear-gradient(rgba(251, 191, 36, 0.03) 1px, transparent 1px), 
-                linear-gradient(90deg, rgba(251, 191, 36, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-        .tech-border {
-            position: relative;
-            background: rgba(11, 17, 32, 0.85);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            backdrop-filter: blur(12px);
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-        }
-        /* Sudut Siku-Siku HUD */
-        .corner-tl { position: absolute; top: -1px; left: -1px; width: 10px; height: 10px; border-top: 2px solid #f59e0b; border-left: 2px solid #f59e0b; }
-        .corner-tr { position: absolute; top: -1px; right: -1px; width: 10px; height: 10px; border-top: 2px solid #f59e0b; border-right: 2px solid #f59e0b; }
-        .corner-bl { position: absolute; bottom: -1px; left: -1px; width: 10px; height: 10px; border-bottom: 2px solid #f59e0b; border-left: 2px solid #f59e0b; }
-        .corner-br { position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px; border-bottom: 2px solid #f59e0b; border-right: 2px solid #f59e0b; }
-        
-        /* Animasi Scanline Halus */
-        @keyframes scan {
-            0% { background-position: 0% 0%; }
-            100% { background-position: 0% 100%; }
-        }
-        .scanline-overlay {
-            position: absolute; inset: 0; pointer-events: none;
-            background: linear-gradient(to bottom, transparent 50%, rgba(245, 158, 11, 0.02) 51%);
-            background-size: 100% 4px;
-            animation: scan 10s linear infinite;
-            z-index: 0;
-        }
+        /* [ADD] Sembunyikan template PDF saat dilihat di browser biasa */
+        #pdf-template { display: none; }
     </style>
 
-    {{-- BACKGROUND UTAMA --}}
-    <div class="sci-fi-bg fixed inset-0 pointer-events-none z-0"></div>
-    <div class="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#05080f] via-transparent to-[#05080f]"></div>
+    {{-- GLOBAL BACKGROUND GRID EFFECT (YELLOW THEME) --}}
+    <div class="fixed inset-0 pointer-events-none z-0 no-print" 
+         style="background-image: linear-gradient(rgba(234, 179, 8, 0.03) 1px, transparent 1px), 
+         linear-gradient(90deg, rgba(234, 179, 8, 0.03) 1px, transparent 1px); 
+         background-size: 40px 40px; mask-image: radial-gradient(circle at center, black 40%, transparent 90%); background-color: #0B1120;">
+    </div>
 
-    {{-- HEADER PRINT (HIDDEN ON SCREEN) --}}
+    {{-- 3. KOP SURAT (HANYA MUNCUL SAAT PRINT CTRL+P) --}}
     <div class="print-header">
         <h1 class="text-2xl font-bold uppercase tracking-wider">BERITA ACARA KEPUTUSAN</h1>
         <h2 class="text-xl font-bold">PEMILIHAN SUPERVISOR TOKO RETAIL</h2>
-        <p class="text-sm mt-2">Dicetak pada Tanggal: {{ now()->translatedFormat('d F Y, H:i') }} WIB</p>
+        <p class="text-sm mt-2">Dicetak pada: {{ now()->translatedFormat('d F Y, H:i') }} WIB</p>
     </div>
 
-    {{-- HEADER DASHBOARD (LAYAR) --}}
-    <div class="tech-border rounded-none mb-8 z-10 no-print overflow-hidden relative group">
-        <div class="scanline-overlay"></div>
-        <div class="bg-black/40 border-b border-yellow-500/20 p-4 flex items-center justify-between relative z-10">
-            <div class="flex items-center gap-4">
-                <div class="flex gap-1">
-                    <div class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
-                    <div class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
-                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                </div>
-                <h3 class="text-yellow-400 font-mono font-bold text-sm tracking-[0.3em] opacity-90 flex items-center gap-2">
-                    <i class="fas fa-satellite-dish text-xs"></i> HASIL KONSENSUS
-                </h3>
-            </div>
-            <div class="text-[10px] font-mono text-yellow-600 bg-yellow-900/20 px-2 py-1 border border-yellow-500/30 rounded">
-                SUPERVISOR
-            </div>
-        </div>
-        <div class="h-0.5 w-full bg-gradient-to-r from-transparent via-yellow-500 to-transparent opacity-50"></div>
-    </div>
-
-    {{-- ALERT NOTIFICATIONS --}}
-    <div class="no-print relative z-10 max-w-7xl mx-auto">
+    {{-- 4. NOTIFIKASI (CYBERPUNK STYLE) --}}
+    <div class="no-print animate-slide-up">
         @if(session('success'))
-            <div class="tech-border border-l-4 border-l-green-500 p-4 mb-6 flex items-center gap-4 text-green-400 bg-green-900/20">
-                <div class="p-2 bg-green-500/10 rounded-full"><i class="fas fa-check-circle text-xl"></i></div>
-                <div>
-                    <h4 class="font-bold font-mono text-sm">SUCCESS_PROTOCOL</h4>
-                    <p class="text-xs opacity-80">{{ session('success') }}</p>
+            <div class="relative mb-6 group overflow-hidden rounded border border-yellow-500/50 bg-yellow-900/20 backdrop-blur-md p-4 text-yellow-400 shadow-[0_0_25px_rgba(234,179,8,0.2)]">
+                <div class="absolute inset-0 bg-linear-to-r from-transparent via-yellow-500/10 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]"></div>
+                <div class="relative flex items-center gap-3">
+                    <i class="fas fa-check-circle text-xl animate-pulse"></i>
+                    <div>
+                        <p class="font-mono font-bold text-xs tracking-widest uppercase text-yellow-300">SYSTEM SUCCESS</p>
+                        <p class="text-sm text-yellow-100">{{ session('success') }}</p>
+                    </div>
                 </div>
             </div>
         @endif
         @if(session('error'))
-            <div class="tech-border border-l-4 border-l-red-500 p-4 mb-6 flex items-center gap-4 text-red-400 bg-red-900/20">
-                <div class="p-2 bg-red-500/10 rounded-full"><i class="fas fa-exclamation-triangle text-xl"></i></div>
-                <div>
-                    <h4 class="font-bold font-mono text-sm">ERROR_PROTOCOL</h4>
-                    <p class="text-xs opacity-80">{{ session('error') }}</p>
+            <div class="relative mb-6 group overflow-hidden rounded border border-red-500/50 bg-red-900/20 backdrop-blur-md p-4 text-red-400 shadow-[0_0_25px_rgba(239,68,68,0.2)]">
+                <div class="absolute inset-0 bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div class="relative flex items-center gap-3">
+                    <i class="fas fa-exclamation-triangle text-xl animate-pulse"></i>
+                    <div>
+                        <p class="font-mono font-bold text-xs tracking-widest uppercase">SYSTEM ERROR</p>
+                        <p class="text-sm">{{ session('error') }}</p>
+                    </div>
                 </div>
             </div>
         @endif
     </div>
 
-    {{-- ACTION BUTTONS --}}
-    <div class="mb-8 flex flex-col md:flex-row justify-between items-center no-print gap-4 relative z-10">
-        <button onclick="window.print()" class="group relative px-8 py-3 bg-black border border-gray-600 hover:border-white transition-all duration-300">
-            <div class="absolute inset-0 bg-gray-800 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
-            <div class="relative flex items-center gap-3 text-gray-300 group-hover:text-white font-mono tracking-widest text-sm">
-                <i class="fas fa-print"></i> CETAK LAPORAN PDF
-            </div>
-            <div class="absolute top-0 left-0 w-1 h-1 bg-white"></div>
-            <div class="absolute bottom-0 right-0 w-1 h-1 bg-white"></div>
+    {{-- 5. TOMBOL AKSI (CYBERPUNK STYLE) --}}
+    <div class="mb-8 flex flex-col md:flex-row justify-between items-center no-print gap-4 relative z-10 animate-slide-up delay-100">
+        {{-- [MODIFIED] Ganti window.print() dengan generatePDF() --}}
+        <button onclick="generatePDF()" class="group relative inline-flex items-center gap-3 px-6 py-3 bg-[#0B1120] border border-gray-600 rounded overflow-hidden hover:border-yellow-400 hover:shadow-[0_0_15px_rgba(234,179,8,0.4)] transition-all duration-300">
+            <div class="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            <i class="fas fa-file-pdf text-red-500 group-hover:text-yellow-400 transition-colors"></i> 
+            <span class="font-mono text-gray-300 font-bold text-sm tracking-wider group-hover:text-white">DOWNLOAD LAPORAN HASIL</span>
         </button>
 
         @if(Auth::user()->role == 'area_manager')
-        <div class="flex items-center gap-6">
-            <div class="text-[10px] font-mono text-yellow-600/80 text-right uppercase tracking-widest">
-                <i class="fas fa-circle text-[6px] text-yellow-500 animate-ping mr-1"></i>
-                Menunggu data...
+            <div class="flex items-center gap-4">
+                <div class="hidden md:block px-3 py-1 border border-yellow-500/20 bg-yellow-900/10 rounded text-xs font-mono text-yellow-500/70 animate-pulse">
+                    <i class="fas fa-info-circle mr-1"></i> KALKULASI ULANG BILA DATA BARU DIGANTI                </div>
+                <form action="{{ route('consensus.generate') }}" method="POST" class="inline-block">
+                    @csrf
+                    <button type="submit" class="group relative inline-flex items-center gap-3 px-6 py-3 bg-linear-to-r from-yellow-700 to-yellow-600 border border-yellow-400 rounded overflow-hidden hover:from-yellow-600 hover:to-yellow-500 transition-all duration-300 shadow-[0_0_20px_rgba(234,179,8,0.4)] hover:shadow-[0_0_30px_rgba(234,179,8,0.6)]">
+                        <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 skew-y-12"></div>
+                        <i class="fas fa-sync-alt text-white relative z-10 group-hover:rotate-180 transition-transform duration-500"></i>
+                        <span class="font-bold text-white tracking-wider font-mono relative z-10">HITUNG ULANG</span>
+                    </button>
+                </form>
             </div>
-            <form action="{{ route('consensus.generate') }}" method="POST" class="inline-block">
-                @csrf
-                <button type="submit" class="group relative px-8 py-3 bg-yellow-900/20 border border-yellow-500 hover:bg-yellow-500/20 transition-all duration-300">
-                    <div class="absolute inset-0 bg-yellow-500/10 blur-lg opacity-0 group-hover:opacity-50 transition-opacity"></div>
-                    <div class="relative flex items-center gap-3 text-yellow-400 font-mono font-bold tracking-wider text-sm">
-                        <i class="fas fa-sync-alt group-hover:animate-spin"></i> ULANGI...
-                    </div>
-                    <div class="absolute top-0 right-0 w-2 h-2 border-t border-r border-yellow-400"></div>
-                    <div class="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-yellow-400"></div>
-                </button>
-            </form>
-        </div>
         @endif
     </div>
 
-    @if(!$hasResult)
-        {{-- EMPTY STATE --}}
-        <div class="tech-border p-12 text-center relative z-10 no-print">
-            <div class="corner-tl"></div><div class="corner-tr"></div><div class="corner-bl"></div><div class="corner-br"></div>
-            <div class="mb-6 inline-block p-6 rounded-full bg-gray-800/50 border border-gray-700">
-                <i class="fas fa-database text-5xl text-gray-600"></i>
-            </div>
-            <h3 class="text-2xl font-bold text-gray-400 font-mono tracking-tighter">DATA KOSONG</h3>
-            <p class="text-gray-500 font-mono text-sm mt-2">Sistem menunggu kalkulasi dan arahan dari Area Manager.</p>
-        </div>
-    @else
+    {{-- 6. KONTEN UTAMA WRAPPER --}}
+    <div class="rounded-xl overflow-hidden relative border border-yellow-500/20 bg-[#0B1120]/90 backdrop-blur-md shadow-[0_0_30px_rgba(0,0,0,0.5)] z-10 col-print animate-slide-up delay-200">
         
-        <div class="mb-4 flex justify-end items-center gap-2 no-print relative z-10">
-             <div class="h-px w-12 bg-yellow-500/30"></div>
-             <div class="text-[10px] font-mono text-yellow-500 uppercase tracking-widest">
-                Last Update: <span class="text-white">{{ $lastRun->format('d M Y // H:i:s') }}</span>
-             </div>
+        {{-- Header Terminal --}}
+        <div class="bg-black/40 border-b border-yellow-500/10 p-3 px-6 flex items-center justify-between no-print">
+            <div class="flex items-center gap-3">
+                <div class="flex gap-1.5">
+                    <div class="w-2.5 h-2.5 bg-red-500/80 rounded-full shadow-[0_0_5px_rgba(239,68,68,0.5)]"></div>
+                    <div class="w-2.5 h-2.5 bg-yellow-500/80 rounded-full shadow-[0_0_5px_rgba(234,179,8,0.5)]"></div>
+                    <div class="w-2.5 h-2.5 bg-green-500/80 rounded-full shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
+                </div>
+                <h3 class="text-yellow-400 font-mono font-bold text-xs tracking-[0.2em] ml-4 opacity-80">
+                    PROTOKOL KONSENSUS
+                </h3>
+            </div>
+            <div class="text-[10px] font-mono text-yellow-500/50 animate-pulse">
+                STATUS: CALCULATED
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 grid-print relative z-10">
-            
-            {{-- 1. CHART SECTION --}}
-            <div class="tech-border p-6 col-print relative group">
-                <div class="corner-tl"></div><div class="corner-tr"></div><div class="corner-bl"></div><div class="corner-br"></div>
-                
-                <div class="flex justify-between items-end mb-6 border-b border-yellow-500/20 pb-2">
-                    <h3 class="font-bold font-mono text-yellow-400 text-lg flex items-center gap-2">
-                        <i class="fas fa-chart-bar text-sm"></i> VISUAL_METRICS
-                    </h3>
-                    <div class="flex gap-1">
-                        <div class="w-1 h-3 bg-yellow-500/50"></div>
-                        <div class="w-1 h-5 bg-yellow-500/80"></div>
-                        <div class="w-1 h-2 bg-yellow-500/30"></div>
+        <div class="p-6 border-b border-yellow-500/10 relative overflow-hidden no-print">
+             {{-- Header Decorative Scanline --}}
+             <div class="absolute inset-0 bg-linear-to-r from-transparent via-yellow-500/10 to-transparent -translate-x-full animate-[shimmer_3s_infinite]"></div>
+             <h3 class="text-xl md:text-2xl font-black text-white tracking-tighter flex items-center gap-3 relative z-10">
+                <i class="fas fa-chart-pie text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.8)]"></i> 
+                HASIL <span class="text-yellow-400">KEPUTUSAN</span> KONSENSUS
+            </h3>
+        </div>
+
+        <div class="p-6 relative">
+            @if(!$hasResult)
+                {{-- KONDISI KOSONG --}}
+                <div class="text-center py-20 border border-dashed border-gray-700 rounded-lg bg-[#050b14] opacity-80">
+                    <i class="fas fa-folder-open text-6xl text-gray-700 mb-4"></i>
+                    <h3 class="text-xl font-mono font-bold text-yellow-600">DATA NOT FOUND</h3>
+                    <p class="text-gray-500 font-mono text-xs mt-2">>> WAITING FOR MANAGER EXECUTION...</p>
+                </div>
+            @else
+                {{-- KONDISI ADA DATA --}}
+                <div class="mb-4 text-xs font-mono text-yellow-500/60 text-right no-print border-b border-yellow-500/10 pb-2">
+                    Dilakukan Pada: <span class="font-bold text-yellow-400">{{ $lastRun->format('d M Y, H:i') }}</span>
+                </div>
+
+                {{-- GRID LAYOUT --}}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 grid-print">
+                    
+                    {{-- A. GRAFIK CHART --}}
+                    <div class="bg-[#050b14] p-6 rounded-lg border border-yellow-500/20 shadow-inner col-print relative cyber-corners group transition-colors duration-500">
+                        <h3 class="font-mono font-bold text-gray-400 text-xs mb-4 border-b border-gray-800 pb-2 uppercase tracking-wider group-hover:text-yellow-400 transition-colors">
+                            <i class="fas fa-chart-bar mr-2 text-yellow-500"></i> Statistik (Poin Borda)
+                        </h3>
+                        <div class="h-64 w-full relative">
+                            <canvas id="bordaChart"></canvas>
+                        </div>
+                    </div>
+
+                    {{-- B. JUARA UTAMA (WINNER CARD) --}}
+                    <div class="bg-linear-to-br from-yellow-900/20 to-[#050b14] p-6 rounded-lg border border-yellow-500/30 text-center flex flex-col justify-center items-center mt-4 lg:mt-0 col-print relative overflow-hidden hover:shadow-[0_0_30px_rgba(234,179,8,0.15)] transition-all duration-500">
+                        {{-- Decorative Background --}}
+                        <div class="absolute inset-0" style="background-image: radial-gradient(circle at center, rgba(234,179,8,0.1) 0%, transparent 70%);"></div>
+                        <div class="absolute top-0 right-0 p-2 opacity-30"><i class="fas fa-quote-right text-4xl text-yellow-900"></i></div>
+                        
+                        <div class="relative z-10 inline-block p-6 rounded-full bg-yellow-500/10 border border-yellow-400 text-yellow-400 mb-4 shadow-[0_0_20px_rgba(234,179,8,0.3)] no-print animate-float">
+                            <i class="fas fa-trophy fa-4x drop-shadow-[0_0_15px_rgba(234,179,8,0.9)]"></i>
+                        </div>
+                        
+                        <h2 class="text-yellow-500/70 font-mono font-bold uppercase tracking-[0.3em] text-xs mb-2 relative z-10">
+                            KANDIDAT TERBAIK
+                        </h2>
+                        
+                        @if(isset($results[0]))
+                            <h1 class="text-3xl md:text-4xl font-black text-white mt-2 mb-2 uppercase tracking-tight relative z-10 drop-shadow-md">
+                                {{ $results[0]->candidate->name }}
+                            </h1>
+                            <div class="mt-4 flex gap-3 justify-center relative z-10">
+                                <div class="bg-yellow-500 text-black px-4 py-1 rounded text-xs font-bold shadow-[0_0_15px_rgba(234,179,8,0.5)] font-mono badge-print">
+                                    SKOR: {{ $results[0]->total_points }}
+                                </div>
+                                <div class="bg-[#0B1120] border border-yellow-400 text-yellow-400 px-4 py-1 rounded text-xs font-bold shadow font-mono badge-print">
+                                    RANK #1
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
-                
-                <div class="h-64 w-full relative">
-                    <canvas id="bordaChart"></canvas>
-                </div>
-            </div>
 
-            {{-- 2. TOP CANDIDATE SECTION --}}
-            <div class="tech-border p-6 col-print relative flex flex-col justify-center items-center bg-gradient-to-b from-[#0B1120] to-[#1a1600]">
-                <div class="corner-tl"></div><div class="corner-tr"></div><div class="corner-bl"></div><div class="corner-br"></div>
-                <div class="scanline-overlay opacity-30"></div>
-                
-                {{-- Glow Effect Behind Trophy --}}
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-yellow-500/20 blur-[50px] rounded-full no-print"></div>
-
-                <div class="relative z-10 text-center">
-                    <div class="inline-flex items-center justify-center w-20 h-20 mb-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 shadow-[0_0_20px_rgba(234,179,8,0.2)] no-print">
-                        <i class="fas fa-trophy text-4xl text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.8)]"></i>
+                {{-- C. TABEL PERINGKAT --}}
+                <div class="rounded-lg overflow-hidden mb-8 border border-yellow-500/20 col-print bg-[#050b14] shadow-lg">
+                    <div class="bg-yellow-900/20 text-yellow-400 p-4 no-print border-b border-yellow-500/20 flex justify-between items-center">
+                        <h3 class="font-bold font-mono uppercase text-sm tracking-wider"><i class="fas fa-list-ol mr-2"></i> Data Perhitungan Akhir</h3>
+                        <div class="flex gap-1">
+                            <div class="h-1.5 w-1.5 bg-yellow-500 rounded-full animate-pulse"></div>
+                            <div class="h-1.5 w-1.5 bg-yellow-500 rounded-full animate-pulse delay-100"></div>
+                            <div class="h-1.5 w-1.5 bg-yellow-500 rounded-full animate-pulse delay-200"></div>
+                        </div>
                     </div>
                     
-                    <h2 class="text-yellow-600 font-mono font-bold uppercase tracking-[0.3em] text-[10px] mb-2">TOP RECRUIT IDENTIFIED</h2>
-                    @if(isset($results[0]))
-                        <h1 class="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-yellow-200 mb-4 tracking-tighter">
-                            {{ $results[0]->candidate->name }}
-                        </h1>
-                        
-                        <div class="grid grid-cols-2 gap-3 w-full max-w-xs mx-auto font-mono text-xs">
-                            <div class="bg-black/50 border border-yellow-500/30 p-2 text-center">
-                                <span class="block text-gray-500 text-[9px] uppercase">Total Score</span>
-                                <span class="text-xl font-bold text-yellow-400">{{ $results[0]->total_points }}</span>
-                            </div>
-                            <div class="bg-black/50 border border-yellow-500/30 p-2 text-center">
-                                <span class="block text-gray-500 text-[9px] uppercase">Rank Status</span>
-                                <span class="text-xl font-bold text-yellow-400">#1</span>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
+                    <div class="print-header hidden text-left font-bold px-4 pt-4" style="border:none; margin-bottom:0;">
+                        DETAIL PERINGKAT FINAL:
+                    </div>
 
-        {{-- 3. RANKING TABLE --}}
-        <div class="tech-border mb-10 overflow-hidden relative z-10">
-            <div class="corner-tl"></div><div class="corner-tr"></div><div class="corner-bl"></div><div class="corner-br"></div>
-            
-            <div class="bg-black/50 border-b border-yellow-500/20 p-4 flex justify-between items-center no-print">
-                <h3 class="font-bold font-mono text-yellow-400 text-sm tracking-widest flex items-center gap-2">
-                    <i class="fas fa-list text-yellow-600"></i> RANKING_MATRIX
-                </h3>
-                <div class="text-[10px] font-mono text-gray-500">SORT: DESCENDING</div>
-            </div>
-
-            <div class="print-header hidden text-left font-bold mb-2 mt-6" style="border:none; margin-bottom:10px;">DETAIL PERINGKAT FINAL:</div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-yellow-500/5 text-yellow-600 font-mono uppercase text-[10px] tracking-wider">
-                            <th class="py-3 px-6 text-center w-24 border-b border-yellow-500/20">#Rank</th>
-                            <th class="py-3 px-6 border-b border-yellow-500/20">Candidate Name</th>
-                            <th class="py-3 px-6 text-center border-b border-yellow-500/20">Total Points</th>
-                            <th class="py-3 px-6 text-center border-b border-yellow-500/20">Decision</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-gray-300 text-sm font-mono">
-                        @foreach($results as $res)
-                        <tr class="border-b border-yellow-500/10 hover:bg-yellow-500/10 transition-colors group {{ $res->final_rank == 1 ? 'bg-yellow-500/5' : '' }}">
-                            <td class="py-4 px-6 text-center">
-                                @if($res->final_rank == 1) 
-                                    <div class="inline-flex items-center justify-center w-6 h-6 rounded bg-yellow-500 text-black font-bold shadow-[0_0_10px_rgba(234,179,8,0.5)]">1</div>
-                                @else 
-                                    <span class="opacity-50">{{ $res->final_rank }}</span> 
-                                @endif
-                            </td>
-                            <td class="py-4 px-6 font-bold text-white group-hover:text-yellow-300 transition-colors tracking-wide">
-                                {{ $res->candidate->name }}
-                            </td>
-                            <td class="py-4 px-6 text-center text-yellow-500 font-bold text-lg">
-                                {{ $res->total_points }}
-                            </td>
-                            <td class="py-4 px-6 text-center">
-                                @if($res->final_rank <= 3) 
-                                    <span class="inline-block px-3 py-1 text-[10px] font-bold text-black bg-green-500 rounded shadow-[0_0_10px_rgba(34,197,94,0.5)]">RECOMMENDED</span> 
-                                @else 
-                                    <span class="text-gray-600 text-xs">-</span> 
-                                @endif
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        {{-- 4. SIGNATURE SECTION (PRINT ONLY) --}}
-        <div class="signature-section w-full flex justify-between text-center px-10 text-sm mt-12">
-            <div class="w-1/3">
-                <p>Mengetahui,</p>
-                <p class="font-bold mb-20">HR Department</p>
-                <p>( ................................. )</p>
-            </div>
-            <div class="w-1/3">
-                <p>Menyetujui,</p>
-                <p class="font-bold mb-20">Area Manager</p>
-                <p class="font-bold underline">{{ Auth::user()->role == 'area_manager' ? Auth::user()->name : '( ................................. )' }}</p>
-            </div>
-        </div>
-
-        {{-- 5. DEBUG / TRANSPARENCY (SCREEN ONLY) --}}
-        <div x-data="{ open: false }" class="tech-border mb-10 no-print relative z-10">
-            <div class="corner-tl"></div><div class="corner-tr"></div><div class="corner-bl"></div><div class="corner-br"></div>
-            
-            <button @click="open = !open" class="w-full flex justify-between items-center p-4 hover:bg-white/5 focus:outline-none transition-colors border-b border-yellow-500/10">
-                <h3 class="font-bold text-gray-400 font-mono text-xs flex items-center tracking-widest">
-                    <i class="fas fa-code mr-2 text-yellow-600"></i> 
-                    SYSTEM_LOGS // CALCULATION_TRANSPARENCY
-                </h3>
-                <i :class="open ? 'fa-minus text-yellow-500' : 'fa-plus text-gray-600'" class="fas text-xs"></i>
-            </button>
-
-            <div x-show="open" class="p-6 space-y-8 bg-black/40" style="display: none;">
-                
-                {{-- 5A. BORDA TABLE --}}
-                <div>
-                    <h4 class="text-yellow-500 mb-3 text-xs font-mono uppercase border-l-2 border-yellow-500 pl-2">A. Aggregation Source (Borda)</h4>
-                    <div class="overflow-x-auto border border-gray-800">
-                        <table class="w-full table-auto text-xs font-mono text-center">
-                            <thead class="bg-gray-900 text-gray-400">
-                                <tr>
-                                    <th class="p-2 text-left">CANDIDATE</th>
-                                    @foreach(\App\Models\User::where('role','!=','admin')->get() as $u)
-                                        <th class="p-2 border-l border-gray-800">{{ $u->name }}<br><span class="text-[9px] text-gray-600">{{ strtoupper($u->role) }}</span></th>
-                                    @endforeach
-                                    <th class="p-2 bg-yellow-900/20 text-yellow-500 border-l border-gray-800">TOTAL</th>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-[#0B1120] text-gray-400 uppercase text-xs font-mono leading-normal border-b border-gray-700">
+                                    <th class="py-3 px-6 text-center w-20 font-bold text-yellow-500">Rank</th>
+                                    <th class="py-3 px-6 font-bold text-yellow-500">Nama Kandidat</th>
+                                    <th class="py-3 px-6 text-center font-bold text-yellow-500">Total Poin Borda</th>
+                                    <th class="py-3 px-6 text-center font-bold text-yellow-500">Status</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-black/20 text-gray-300">
-                                @foreach($candidates as $can)
-                                <tr class="border-t border-gray-800 hover:bg-white/5">
-                                    <td class="p-2 text-left font-bold text-white">{{ $can->name }}</td>
-                                    @foreach(\App\Models\User::where('role','!=','admin')->get() as $u)
-                                        @php 
-                                            $rankData = $topsisBreakdown[$can->id]->where('user_id', $u->id)->first();
-                                            $rank = $rankData ? $rankData->rank : '-';
-                                            $poin = $rank != '-' ? (count($candidates) - $rank + 1) : 0;
-                                        @endphp
-                                        <td class="p-2 border-l border-gray-800">
-                                            R:<span class="text-white">{{ $rank }}</span> <span class="text-yellow-600">({{ $poin }}pts)</span>
+                            <tbody class="text-gray-300 text-sm font-mono">
+                                @foreach($results as $res)
+                                    <tr class="border-b border-gray-800 hover:bg-yellow-500/10 transition-all duration-200 {{ $res->final_rank == 1 ? 'bg-yellow-900/10 shadow-[inset_0_0_10px_rgba(234,179,8,0.1)]' : '' }}">
+                                        <td class="py-3 px-6 text-center">
+                                            @if($res->final_rank == 1) 
+                                                <i class="fas fa-crown text-yellow-400 no-print animate-bounce drop-shadow-[0_0_5px_rgba(234,179,8,0.8)]"></i> <span class="font-bold text-yellow-400">1</span>
+                                            @else 
+                                                {{ $res->final_rank }} 
+                                            @endif
                                         </td>
-                                    @endforeach
-                                    <td class="p-2 font-bold text-yellow-400 bg-yellow-500/5 border-l border-gray-800">{{ $results->where('candidate_id', $can->id)->first()->total_points ?? 0 }}</td>
-                                </tr>
+                                        <td class="py-3 px-6 font-bold {{ $res->final_rank == 1 ? 'text-white tracking-wide' : 'text-gray-400' }}">
+                                            {{ $res->candidate->name }}
+                                        </td>
+                                        <td class="py-3 px-6 text-center text-yellow-500/80">{{ $res->total_points }}</td>
+                                        <td class="py-3 px-6 text-center">
+                                            @if($res->final_rank <= 3) 
+                                                <span class="text-green-400 font-bold badge-print text-xs tracking-wider border border-green-500/30 px-2 py-0.5 rounded bg-green-900/20 shadow-[0_0_10px_rgba(74,222,128,0.2)]">[ DIREKOMENDASIKAN ]</span> 
+                                            @else 
+                                                <span class="text-gray-600 font-bold">-</span> 
+                                            @endif
+                                        </td>
+                                    </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                {{-- 5B. TOPSIS STEPS --}}
-                <div>
-                    <h4 class="text-yellow-500 mb-3 text-xs font-mono uppercase border-l-2 border-yellow-500 pl-2">B. Calculation Step (User: {{ Auth::user()->name }})</h4>
-                    
-                    <div x-data="{ tab: 'x' }">
-                        <div class="flex gap-1 mb-2">
-                            <button @click="tab = 'x'" :class="tab === 'x' ? 'bg-yellow-600 text-black' : 'bg-gray-800 text-gray-500 hover:bg-gray-700'" class="px-3 py-1 text-[10px] font-mono font-bold transition">1. MATRIX(X)</button>
-                            <button @click="tab = 'r'" :class="tab === 'r' ? 'bg-yellow-600 text-black' : 'bg-gray-800 text-gray-500 hover:bg-gray-700'" class="px-3 py-1 text-[10px] font-mono font-bold transition">2. NORMAL(R)</button>
-                            <button @click="tab = 'y'" :class="tab === 'y' ? 'bg-yellow-600 text-black' : 'bg-gray-800 text-gray-500 hover:bg-gray-700'" class="px-3 py-1 text-[10px] font-mono font-bold transition">3. WEIGHT(Y)</button>
+                {{-- D. TANDA TANGAN (PRINT ONLY - DEFAULT) --}}
+                <div class="signature-section w-full flex justify-between text-center px-10 text-sm mt-12">
+                    <div class="w-1/3">
+                        <p class="mb-1">Mengetahui,</p>
+                        <p class="font-bold mb-24">HR Department</p>
+                        <p class="border-t border-black inline-block pt-1 w-48">( ................................. )</p>
+                    </div>
+                    <div class="w-1/3">
+                        <p class="mb-1">Menyetujui,</p>
+                        <p class="font-bold mb-24">Area Manager</p>
+                        <p class="font-bold underline uppercase">
+                            {{ Auth::user()->role == 'area_manager' ? Auth::user()->name : '( ................................. )' }}
+                        </p>
+                    </div>
+                </div>
+
+                {{-- E. TRANSPARANSI PERHITUNGAN (SCREEN ONLY) --}}
+                <div x-data="{ open: false }" class="mt-8 border border-yellow-500/20 rounded-lg bg-[#050b14] overflow-hidden no-print animate-slide-up delay-300">
+                    <button @click="open = !open" class="w-full flex justify-between items-center p-4 bg-gray-800/50 hover:bg-gray-800 focus:outline-none transition text-left group border-l-4 border-transparent hover:border-yellow-500">
+                        <h3 class="font-bold text-gray-300 font-mono text-xs flex items-center uppercase tracking-wider group-hover:text-yellow-400 transition-colors">
+                            <i class="fas fa-calculator mr-3 text-yellow-600 group-hover:text-yellow-400 group-hover:animate-spin"></i>
+                            >>> Lihat Detail Kalkulasi                        </h3>
+                        <i :class="open ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas text-gray-500 group-hover:text-yellow-400"></i>
+                    </button>
+
+                    <div x-show="open" x-transition class="p-6 border-t border-yellow-500/10 space-y-8 bg-[#0B1120]" style="display: none;">
+                        
+                        {{-- Optimasi: Ambil user decision maker sekali saja --}}
+                        @php
+                            $decisionMakers = \App\Models\User::where('role','!=','admin')->get();
+                            $candidateCount = count($candidates);
+                        @endphp
+
+                        <div>
+                            <h4 class="font-bold text-yellow-500 mb-4 text-xs font-mono uppercase border-b border-gray-700 pb-1 w-max">
+                                <i class="fas fa-caret-right"></i> A. TITIK ASAL BORDA (AGGREGRASI)
+                            </h4>
+                            <div class="overflow-x-auto rounded border border-gray-700 scrollbar-thin scrollbar-thumb-yellow-900 scrollbar-track-gray-900">
+                                <table class="w-full table-auto text-xs border-collapse text-center font-mono">
+                                    <thead class="bg-gray-800 text-gray-400">
+                                        <tr>
+                                            <th class="p-3 border-b border-gray-700 border-r text-left">Kandidat</th>
+                                            @foreach($decisionMakers as $u)
+                                                <th class="p-3 border-b border-gray-700 border-r hover:text-yellow-200 transition-colors">
+                                                    {{ $u->name }} <br>
+                                                    <span class="text-gray-600 text-[10px]">({{ $u->role }})</span>
+                                                </th>
+                                            @endforeach
+                                            <th class="p-3 border-b border-gray-700 bg-yellow-900/20 text-yellow-400 font-bold">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-300">
+                                        @foreach($candidates as $can)
+                                            <tr class="hover:bg-white/5 transition-colors">
+                                                <td class="p-2 border-b border-r border-gray-700 text-left font-bold text-yellow-100">{{ $can->name }}</td>
+                                                @foreach($decisionMakers as $u)
+                                                    @php
+                                                        $rankData = $topsisBreakdown[$can->id]->where('user_id', $u->id)->first();
+                                                        $rank = $rankData ? $rankData->rank : '-';
+                                                        $poin = $rank != '-' ? ($candidateCount - $rank + 1) : 0;
+                                                    @endphp
+                                                    <td class="p-2 border-b border-r border-gray-700">
+                                                        Rank: <b class="text-white">{{ $rank }}</b> <br>
+                                                        <span class="text-yellow-500 font-bold">({{ $poin }} Pts)</span>
+                                                    </td>
+                                                @endforeach
+                                                <td class="p-2 border-b border-gray-700 font-bold bg-yellow-900/10 text-yellow-400 text-sm">
+                                                    {{ $results->where('candidate_id', $can->id)->first()->total_points ?? 0 }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
-                        <div class="border border-gray-800 bg-black/20 p-2 overflow-x-auto">
-                            {{-- TAB X --}}
-                            <div x-show="tab === 'x'">
-                                <table class="w-full text-xs font-mono text-center text-gray-400">
-                                    <thead><tr><th class="p-1 text-left">ALT</th>@foreach($criterias as $c)<th class="p-1 text-yellow-600">{{ $c->code }}</th>@endforeach</tr></thead>
-                                    <tbody>@foreach($candidates as $can)<tr><td class="p-1 text-left text-white">{{ $can->name }}</td>@foreach($criterias as $c)<td class="p-1">{{ $matrixX[$can->id][$c->id] ?? '-' }}</td>@endforeach</tr>@endforeach</tbody>
-                                </table>
-                            </div>
-                            {{-- TAB R --}}
-                            <div x-show="tab === 'r'" style="display: none;">
-                                <table class="w-full text-xs font-mono text-center text-gray-400">
-                                    <thead><tr><th class="p-1 text-left">ALT</th>@foreach($criterias as $c)<th class="p-1 text-yellow-600">{{ $c->code }}</th>@endforeach</tr></thead>
-                                    <tbody>@foreach($candidates as $can)<tr><td class="p-1 text-left text-white">{{ $can->name }}</td>@foreach($criterias as $c)<td class="p-1">{{ number_format($matrixR[$can->id][$c->id] ?? 0, 4) }}</td>@endforeach</tr>@endforeach</tbody>
-                                </table>
-                            </div>
-                            {{-- TAB Y --}}
-                            <div x-show="tab === 'y'" style="display: none;">
-                                <table class="w-full text-xs font-mono text-center text-gray-400">
-                                    <thead><tr><th class="p-1 text-left">ALT</th>@foreach($criterias as $c)<th class="p-1 text-yellow-600">{{ $c->code }}</th>@endforeach</tr></thead>
-                                    <tbody>@foreach($candidates as $can)<tr><td class="p-1 text-left text-white">{{ $can->name }}</td>@foreach($criterias as $c)<td class="p-1 text-green-400">{{ number_format($matrixY[$can->id][$c->id] ?? 0, 4) }}</td>@endforeach</tr>@endforeach</tbody>
-                                </table>
+                        <div>
+                            <h4 class="font-bold text-yellow-500 mb-2 text-xs font-mono uppercase border-b border-gray-700 pb-1 w-max">
+                                <i class="fas fa-caret-right"></i> B. Sampel Perhitungan TOPSIS (User: {{ Auth::user()->name }})
+                            </h4>
+                            <p class="text-[10px] font-mono text-gray-500 mb-4">>> MENUNJUKKAN HASIL LOGIKA KALKULASI DI SESI SEKARANG</p>
+
+                            <div x-data="{ tab: 'x' }">
+                                <div class="flex gap-2 mb-3">
+                                    <button @click="tab = 'x'" :class="tab === 'x' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(234,179,8,0.4)]' : 'bg-gray-800 text-gray-500 hover:bg-gray-700 hover:text-gray-300'" class="px-4 py-2 text-xs font-bold font-mono rounded transition border border-transparent">1. MATRIKS (X)</button>
+                                    <button @click="tab = 'r'" :class="tab === 'r' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(234,179,8,0.4)]' : 'bg-gray-800 text-gray-500 hover:bg-gray-700 hover:text-gray-300'" class="px-4 py-2 text-xs font-bold font-mono rounded transition border border-transparent">2. TERNORMALISASI (R)</button>
+                                    <button @click="tab = 'y'" :class="tab === 'y' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(234,179,8,0.4)]' : 'bg-gray-800 text-gray-500 hover:bg-gray-700 hover:text-gray-300'" class="px-4 py-2 text-xs font-bold font-mono rounded transition border border-transparent">3. TERBOBOT (Y)</button>
+                                </div>
+
+                                {{-- MATRIX X --}}
+                                <div x-show="tab === 'x'" class="overflow-x-auto border border-gray-700 rounded bg-[#0a101e]">
+                                    <table class="w-full table-auto text-xs text-center font-mono text-gray-300">
+                                        <thead class="bg-gray-800 text-yellow-500">
+                                            <tr>
+                                                <th class="p-2 border-b border-r border-gray-700 text-left">Alt</th>
+                                                @foreach($criterias as $c)<th class="p-2 border-b border-r border-gray-700" title="{{ $c->name }}">{{ $c->code }}</th>@endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($candidates as $can)
+                                                <tr class="hover:bg-white/5 transition-colors">
+                                                    <td class="p-2 border-b border-r border-gray-700 font-bold text-left text-white">{{ $can->name }}</td>
+                                                    @foreach($criterias as $c)<td class="p-2 border-b border-r border-gray-700">{{ $matrixX[$can->id][$c->id] ?? '-' }}</td>@endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {{-- MATRIX R --}}
+                                <div x-show="tab === 'r'" class="overflow-x-auto border border-gray-700 rounded bg-[#0a101e]" style="display: none;">
+                                    <table class="w-full table-auto text-xs text-center font-mono text-gray-300">
+                                        <thead class="bg-gray-800 text-blue-400">
+                                            <tr>
+                                                <th class="p-2 border-b border-r border-gray-700 text-left">Alt</th>
+                                                @foreach($criterias as $c)<th class="p-2 border-b border-r border-gray-700">{{ $c->code }}</th>@endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($candidates as $can)
+                                                <tr class="hover:bg-white/5 transition-colors">
+                                                    <td class="p-2 border-b border-r border-gray-700 font-bold text-left text-white">{{ $can->name }}</td>
+                                                    @foreach($criterias as $c)<td class="p-2 border-b border-r border-gray-700">{{ number_format($matrixR[$can->id][$c->id] ?? 0, 4) }}</td>@endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {{-- MATRIX Y --}}
+                                <div x-show="tab === 'y'" class="overflow-x-auto border border-gray-700 rounded bg-[#0a101e]" style="display: none;">
+                                    <table class="w-full table-auto text-xs text-center font-mono text-gray-300">
+                                        <thead class="bg-gray-800 text-green-400">
+                                            <tr>
+                                                <th class="p-2 border-b border-r border-gray-700 text-left">Alt</th>
+                                                @foreach($criterias as $c)<th class="p-2 border-b border-r border-gray-700">{{ $c->code }}</th>@endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($candidates as $can)
+                                                <tr class="hover:bg-white/5 transition-colors">
+                                                    <td class="p-2 border-b border-r border-gray-700 font-bold text-left text-white">{{ $can->name }}</td>
+                                                    @foreach($criterias as $c)<td class="p-2 border-b border-r border-gray-700">{{ number_format($matrixY[$can->id][$c->id] ?? 0, 4) }}</td>@endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            @endif
+        </div>
+    </div>
 
+    {{-- ============================================================ --}}
+    {{-- 7. [ADD] TEMPLATE KHUSUS UNTUK PDF (HIDDEN ON SCREEN) --}}
+    {{-- ============================================================ --}}
+    @if($hasResult)
+    <div id="pdf-template">
+        <div style="width: 100%; padding: 40px; background: white; color: black; font-family: 'Times New Roman', serif;">
+            
+            {{-- A. Header Kop --}}
+            <div style="text-align: center; border-bottom: 3px double black; padding-bottom: 20px; margin-bottom: 30px;">
+                <h1 style="font-size: 24px; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 1px;">PENGUMUMAN HASIL KEPUTUSAN</h1>
+                <h2 style="font-size: 18px; font-weight: bold; margin: 5px 0;">PEMILIHAN SUPERVISOR TOKO RETAIL</h2>
+                <p style="font-size: 12px; color: #555; margin-top: 10px;">Dicetak pada: {{ now()->translatedFormat('d F Y, H:i') }} WIB</p>
+            </div>
+
+            {{-- B. Bagian Grafik (Image akan diinject via JS) --}}
+            <div style="margin-bottom: 30px;">
+                <h3 style="font-size: 14px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px;">
+                    I. STATISTIK PEROLEHAN POIN (BORDA)
+                </h3>
+                <div style="width: 100%; display: flex; justify-content: center;">
+                    {{-- Image tag ini akan diisi oleh JS --}}
+                    <img id="chartImageTarget" src="" style="max-width: 100%; max-height: 350px; border: 1px solid #eee;">
+                </div>
+            </div>
+
+            {{-- C. Bagian Pemenang --}}
+            <div style="margin-bottom: 30px; text-align: center; padding: 20px; border: 2px dashed #000; border-radius: 10px; background-color: #f9f9f9;">
+                <h4 style="font-size: 12px; color: #555; uppercase; letter-spacing: 2px; margin-bottom: 10px;">KANDIDAT DIREKOMENDASIKAN</h4>
+                @if(isset($results[0]))
+                    <h1 style="font-size: 42px; font-weight: 900; margin: 10px 0; text-transform: uppercase;">{{ $results[0]->candidate->name }}</h1>
+                    <div style="display: inline-block; border: 2px solid black; padding: 5px 20px; border-radius: 50px; font-weight: bold; font-size: 14px;">
+                        TOTAL SKOR: {{ $results[0]->total_points }}
+                    </div>
+                @endif
+            </div>
+
+            {{-- D. Tabel Detail --}}
+            <div style="margin-bottom: 40px;">
+                <h3 style="font-size: 14px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px;">
+                    II. DETAIL PERINGKAT FINAL (TOP 3)
+                </h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background-color: #e5e7eb;">
+                            <th style="border: 1px solid black; padding: 8px; text-align: center; width: 50px;">RANK</th>
+                            <th style="border: 1px solid black; padding: 8px; text-align: left;">NAMA KANDIDAT</th>
+                            <th style="border: 1px solid black; padding: 8px; text-align: center;">TOTAL POIN</th>
+                            <th style="border: 1px solid black; padding: 8px; text-align: center;">STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{-- MODIFIKASI: Menggunakan take(3) untuk membatasi hanya 3 baris --}}
+                        @foreach($results->take(3) as $res)
+                            <tr style="{{ $res->final_rank == 1 ? 'background-color: #f3f4f6; font-weight: bold;' : '' }}">
+                                <td style="border: 1px solid black; padding: 8px; text-align: center;">{{ $res->final_rank }}</td>
+                                <td style="border: 1px solid black; padding: 8px;">{{ $res->candidate->name }}</td>
+                                <td style="border: 1px solid black; padding: 8px; text-align: center;">{{ $res->total_points }}</td>
+                                <td style="border: 1px solid black; padding: 8px; text-align: center;">
+                                    @if($res->final_rank <= 3) REKOMENDASI @else - @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- E. Tanda Tangan --}}
+            <div style="display: flex; justify-content: space-between; margin-top: 50px;">
+                <div style="width: 40%; text-align: center;">
+                    <p style="margin-bottom: 60px;">Mengetahui,<br><strong>HR Department</strong></p>
+                    <p style="border-top: 1px solid black; width: 80%; margin: 0 auto; padding-top: 5px;">( ................................. )</p>
+                </div>
+                <div style="width: 40%; text-align: center;">
+                    <p style="margin-bottom: 60px;">Menyetujui,<br><strong>Area Manager</strong></p>
+                    <p style="border-top: 1px solid black; width: 80%; margin: 0 auto; padding-top: 5px; font-weight: bold; text-transform: uppercase;">
+                        {{ Auth::user()->role == 'area_manager' ? Auth::user()->name : '( ................................. )' }}
+                    </p>
+                </div>
             </div>
         </div>
+    </div>
+    @endif
 
+    {{-- 8. SCRIPT CHART JS & [ADD] PDF GENERATOR FUNCTION --}}
+    @if($hasResult)
         <script>
-            const ctx = document.getElementById('bordaChart');
-            const labels = {!! json_encode($results->pluck('candidate.name')) !!};
-            const data = {!! json_encode($results->pluck('total_points')) !!};
+            // A. Render Chart untuk Layar (Kode Asli Dipertahankan)
+            document.addEventListener("DOMContentLoaded", function() {
+                const ctx = document.getElementById('bordaChart');
+                const rawLabels = {!! json_encode($results->pluck('candidate.name') ?? []) !!};
+                const rawData = {!! json_encode($results->pluck('total_points') ?? []) !!};
 
-            // Custom Gradient for Chart Bars
-            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(234, 179, 8, 0.8)');
-            gradient.addColorStop(1, 'rgba(234, 179, 8, 0.1)');
+                if (ctx) {
+                    const chartCanvas = ctx.getContext('2d');
+                    const gradient = chartCanvas.createLinearGradient(0, 0, 0, 400);
+                    gradient.addColorStop(0, 'rgba(234, 179, 8, 0.9)'); 
+                    gradient.addColorStop(1, 'rgba(234, 179, 8, 0.1)');
 
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Total Poin',
-                        data: data,
-                        backgroundColor: gradient,
-                        borderColor: '#facc15',
-                        borderWidth: 1,
-                        barThickness: 40,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { 
-                            beginAtZero: true,
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#9ca3af', font: { family: 'monospace' } }
+                    // Simpan instance chart ke window agar bisa diakses fungsi generatePDF
+                    window.myChartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: rawLabels,
+                            datasets: [{
+                                label: 'Total Poin',
+                                data: rawData,
+                                backgroundColor: gradient, 
+                                borderColor: 'rgba(234, 179, 8, 1)',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                barThickness: 'flex',
+                                maxBarThickness: 50,
+                                hoverBackgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                hoverBorderColor: '#ffffff'
+                            }]
                         },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#d1d5db', font: { family: 'monospace' } }
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: { duration: 2000, easing: 'easeOutQuart' },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                                    titleColor: '#fbbf24',
+                                    bodyColor: '#fff',
+                                    borderColor: '#fbbf24',
+                                    borderWidth: 1,
+                                    titleFont: { family: 'monospace' },
+                                    bodyFont: { family: 'monospace' },
+                                    padding: 10,
+                                    displayColors: false,
+                                    callbacks: { label: function(context) { return ' >> SCORE: ' + context.raw; } }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { stepSize: 1, color: '#6b7280', font: {family: 'monospace'} },
+                                    grid: { color: 'rgba(75, 85, 99, 0.2)', borderDash: [5, 5] }
+                                },
+                                x: {
+                                    ticks: { color: '#d1d5db', font: {family: 'monospace', weight: 'bold'} },
+                                    grid: { display: false }
+                                }
+                            }
                         }
-                    },
-                    plugins: {
-                        legend: { display: false }
-                    }
+                    });
                 }
             });
-        </script>
 
+            // [ADD] B. Fungsi Generate PDF menggunakan html2pdf
+            function generatePDF() {
+                // 1. Ambil elemen template PDF
+                const element = document.getElementById('pdf-template');
+                
+                // 2. Ambil Chart Canvas asli & Tempat Gambar di PDF
+                const originalCanvas = document.getElementById('bordaChart');
+                const targetImg = document.getElementById('chartImageTarget');
+
+                if(originalCanvas && targetImg) {
+                    // Trik: Buat canvas sementara background putih agar gambar chart tidak transparan/hitam di PDF
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = originalCanvas.width;
+                    tempCanvas.height = originalCanvas.height;
+                    const tCtx = tempCanvas.getContext('2d');
+                    
+                    // Isi background putih
+                    tCtx.fillStyle = '#FFFFFF';
+                    tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                    // Gambar ulang chart di atas putih
+                    tCtx.drawImage(originalCanvas, 0, 0);
+                    
+                    // Masukkan gambar ke template
+                    targetImg.src = tempCanvas.toDataURL('image/jpeg', 1.0);
+                }
+
+                // 3. Konfigurasi html2pdf
+                const opt = {
+                    margin:       10, // dalam mm
+                    filename:     'Laporan_Keputusan_Final.pdf',
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true }, // Scale 2 agar tajam
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                // 4. Tampilkan template sementara, generate, lalu sembunyikan lagi
+                element.style.display = 'block'; 
+                
+                html2pdf().set(opt).from(element).save().then(function(){
+                    element.style.display = 'none'; 
+                });
+            }
+        </script>
     @endif
+
+    {{-- FOOTER LEGEND --}}
+    <div class="mt-6 holo-card rounded-lg border border-yellow-500/20 bg-[#0B1120]/80 backdrop-blur p-4 relative no-print animate-slide-up delay-300">
+         <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-yellow-500"></div>
+         <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-yellow-500"></div>
+         
+        <h4 class="font-mono font-bold text-xs text-yellow-500 mb-3 flex items-center gap-2 uppercase tracking-widest border-b border-yellow-500/10 pb-2">
+            <i class="fas fa-info-circle"></i> INFORMASI
+        </h4>
+        <p class="text-xs text-gray-400 font-mono">
+            Metode yang digunakan adalah <span class="text-yellow-400 font-bold">Borda Count</span> untuk agregasi grup dan <span class="text-blue-400 font-bold">TOPSIS</span> untuk preferensi individu. Data dienkripsi dan disimpan dalam protokol aman.
+        </p>
+    </div>
+
 @endsection

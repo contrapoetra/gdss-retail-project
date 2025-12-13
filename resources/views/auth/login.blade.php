@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RETAIL // SYSTEM</title>
+    <title>GDSS RETAIL</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@200;400;600;800&display=swap" rel="stylesheet">
     
@@ -18,8 +18,7 @@
                         mono: ['Space Mono', 'monospace'],
                     },
                     colors: {
-                        'void': '#0a0f0d', // Dark Green-Blackish background
-                        // MODIFIED: Mapped to dynamic CSS Variables for RGB Cycle
+                        'void': '#0a0f0d', 
                         'gold-biz': 'var(--primary)', 
                         'emerald-biz': 'var(--secondary)',
                         'glass': 'rgba(255, 255, 255, 0.03)',
@@ -42,7 +41,6 @@
 
     <style>
         :root {
-            /* MODIFIED: Initial values, updated by JS for RGB Gradient effect */
             --primary: hsl(0, 100%, 50%); 
             --secondary: hsl(180, 100%, 50%);
             --success: #00ff41;
@@ -53,10 +51,9 @@
             margin: 0;
             overflow: hidden;
             color: white;
-            cursor: none; /* Hide default cursor */
+            cursor: none;
         }
 
-        /* --- 1. CRT & SCANLINE EFFECTS (Context: Security Camera Feed) --- */
         .scanlines {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -74,7 +71,6 @@
             pointer-events: none;
         }
 
-        /* --- 2. BOOT SEQUENCE (TERMINAL: Stock Loading) --- */
         #boot-screen {
             position: fixed;
             inset: 0;
@@ -100,10 +96,9 @@
             height: 150px;
             overflow: hidden;
             display: flex;
-            flex-direction: column-reverse; /* Log flows up */
+            flex-direction: column-reverse;
         }
 
-        /* Boot Glitch */
         .boot-title-glitch {
             font-size: 5rem;
             font-weight: 800;
@@ -117,7 +112,6 @@
         .boot-title-glitch::before { left: 2px; text-shadow: -1px 0 var(--secondary); animation: glitch-anim-1 2s infinite linear alternate-reverse; }
         .boot-title-glitch::after { left: -2px; text-shadow: -1px 0 var(--primary); animation: glitch-anim-2 3s infinite linear alternate-reverse; }
 
-        /* LOGIN HEADER GLITCH */
         .login-title-glitch {
             position: relative;
             display: inline-block;
@@ -148,7 +142,6 @@
             80% { clip-path: inset(60% 0 20% 0); } 100% { clip-path: inset(15% 0 50% 0); }
         }
 
-        /* CRT TURN ON ANIMATION */
         .crt-open {
             animation: turnOn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
         }
@@ -159,7 +152,6 @@
             100% { transform: scale(1, 1); opacity: 1; filter: brightness(1); }
         }
 
-        /* --- 3. HOLOGRAPHIC CARD (Business Card Look) --- */
         .holo-card {
             background: rgba(15, 25, 20, 0.4);
             backdrop-filter: blur(20px);
@@ -184,7 +176,6 @@
             0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }
         }
 
-        /* --- 4. INPUTS --- */
         .tech-input {
             background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1);
             transition: all 0.3s ease; color: #fff;
@@ -194,7 +185,6 @@
             background: rgba(255, 255, 255, 0.05); outline: none;
         }
 
-        /* --- 5. RUNNING TEXT (MARQUEE - Stock Ticker Style) --- */
         .marquee-container {
             position: relative;
             width: 100%;
@@ -212,7 +202,6 @@
             100% { transform: translateX(-50%); }
         }
 
-        /* --- 6. CURSOR --- */
         #cursor {
             position: fixed; top: 0; left: 0; width: 20px; height: 20px;
             border: 1px solid var(--primary); border-radius: 50%;
@@ -229,7 +218,6 @@
             background-color: var(--primary); opacity: 0.3; border-color: transparent !important;
         }
 
-        /* --- 7. SUCCESS SPLASH & TRANSITION EFFECTS --- */
         #success-overlay {
             position: fixed; inset: 0; background: rgba(5, 10, 5, 0.9); z-index: 9995;
             display: none; flex-direction: column; justify-content: center; align-items: center;
@@ -252,9 +240,14 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
+        /* DIUBAH: sekarang overlay hitam polos untuk fade ke gelap */
         #transition-flash {
-            position: fixed; inset: 0; background: var(--primary); z-index: 10001;
-            pointer-events: none; opacity: 0; transition: opacity 0.5s ease;
+            position: fixed; inset: 0;
+            background: #000000;
+            z-index: 10001;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1.4s ease-in-out;
         }
 
     </style>
@@ -280,7 +273,7 @@
         <div class="text-gold-biz font-mono text-sm mt-4 tracking-[0.5em] animate-pulse">SYSTEM INITIALIZING</div>
         <div class="terminal-log" id="terminal-output"></div>
         <div class="w-64 h-1 bg-gray-800 mt-6 relative overflow-hidden">
-            <div id="boot-bar" class="absolute top-0 left-0 h-full bg-gold-biz shadow-[0_0_10px_var(--primary)] w-0 transition-all duration-[2500ms] ease-out"></div>
+            <div id="boot-bar" class="absolute top-0 left-0 h-full bg-gold-biz shadow-[0_0_10px_var(--primary)] w-0 transition-all duration-2500 ease-out"></div>
         </div>
     </div>
 
@@ -305,7 +298,7 @@
                             </p>
                         </div>
                     </div>
-                    <div class="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-transparent via-gold-biz to-transparent shadow-[0_0_20px_var(--primary)] rounded-full"></div>
+                    <div class="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-linear-to-r from-transparent via-gold-biz to-transparent shadow-[0_0_20px_var(--primary)] rounded-full"></div>
                 </div>
 
                 @if ($errors->any())
@@ -338,7 +331,7 @@
                     </button>
 
                     <div class="mt-8 flex justify-between items-center text-[10px] font-mono text-gray-600">
-                        <a href="#" class="hover:text-gold-biz transition-colors decoration-transparent border-b border-transparent hover:border-gold-biz pb-0.5">DIBUAT OLEH BAGUS ACHMAD SYAHPUTRA</a>
+                        <a href="#" class="hover:text-gold-biz transition-colors decoration-transparent border-b border-transparent hover:border-gold-biz pb-0.5">DESAIN OLEH BAGUS ACHMAD SYAHPUTRA</a>
                         <span class="flex items-center gap-2">
                             TOKO BUKA
                             <span class="block w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_5px_var(--secondary)] animate-pulse"></span>
@@ -355,7 +348,7 @@
     </div>
 
     <script>
-        // --- 1. BOOT SEQUENCE (Business Context) ---
+        // --- 1. BOOT SEQUENCE ---
         const bootScreen = document.getElementById('boot-screen');
         const terminalOutput = document.getElementById('terminal-output');
         const bootBar = document.getElementById('boot-bar');
@@ -388,12 +381,10 @@
 
         window.addEventListener('load', runBootSequence);
 
-        // --- 2. DATA FLOW PARTICLES (RGB WARP & COLOR CYCLE) ---
+        // --- 2. STAR WARP BACKGROUND ---
         const canvas = document.getElementById('warp-canvas');
         const ctx = canvas.getContext('2d');
         let width, height, stars = [], warpSpeed = 0, targetSpeed = 40;
-        
-        // ADDED: Global Hue for RGB Cycling
         let hue = 0;
         
         function resize() {
@@ -408,18 +399,15 @@
         }
 
         function drawStars() {
-            // Background color trace
             ctx.fillStyle = "rgba(10, 15, 13, 0.4)"; ctx.fillRect(0, 0, width, height);
             
             warpSpeed += (targetSpeed - warpSpeed) * 0.05;
             const cx = width / 2; const cy = height / 2;
 
-            // ADDED: RGB CYCLE LOGIC (Berubah-ubah warna)
-            hue = (hue + 0.5) % 360; // Speed of color change
+            hue = (hue + 0.5) % 360;
             const colorPrimary = `hsl(${hue}, 100%, 50%)`;
             const colorSecondary = `hsl(${(hue + 180) % 360}, 100%, 50%)`;
 
-            // Update CSS Variables dynamically for Neon Theme
             document.documentElement.style.setProperty('--primary', colorPrimary);
             document.documentElement.style.setProperty('--secondary', colorSecondary);
 
@@ -432,7 +420,6 @@
                 const length = Math.max(size, (warpSpeed * 2) * (1 - star.z / width)); 
                 const alpha = (1 - star.z / width);
                 
-                // Color: Neon RGB Flow
                 ctx.fillStyle = `hsla(${hue}, 100%, 50%, ${alpha})`;
                 ctx.beginPath();
                 ctx.ellipse(x, y, length, size, Math.atan2(y - cy, x - cx), 0, Math.PI * 2);
@@ -445,6 +432,7 @@
         // --- 3. TYPING REACTIVITY ---
         const inputs = document.querySelectorAll('input');
         let typeTimer;
+        let isSubmitting = false;
         inputs.forEach(input => {
             input.addEventListener('input', () => {
                 if(!isSubmitting) {
@@ -478,11 +466,10 @@
         });
 
 
-        // --- 5. LOGIN SUCCESS LOGIC & TRANSITION ---
+        // --- 5. LOGIN SUCCESS LOGIC & TRANSISI WARP → GELAP ---
         const loginForm = document.getElementById('login-form');
         const successOverlay = document.getElementById('success-overlay');
         const flashOverlay = document.getElementById('transition-flash');
-        let isSubmitting = false;
 
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault(); 
@@ -493,17 +480,25 @@
             if(email && password) {
                 isSubmitting = true;
                 
+                // tampilkan overlay success
                 successOverlay.style.display = "flex";
                 
-                // Warp speed to max (Transaction successful feel)
-                targetSpeed = 100;
+                // percepat warp bintang
+                targetSpeed = 120;
 
+                // fade pelan ke hitam (tanpa warna-warni)
+                flashOverlay.style.background = "#000000";
+                flashOverlay.style.opacity = "0";
+
+                // beri sedikit jeda biar teks "SHIFT STARTED" sempat terbaca
                 setTimeout(() => {
-                    flashOverlay.style.opacity = "1";
-                    setTimeout(() => {
-                        loginForm.submit(); 
-                    }, 600);
-                }, 2000); 
+                    flashOverlay.style.opacity = "1"; // transisi ke gelap (pakai transition CSS)
+                }, 600);
+
+                // setelah layar benar-benar gelap, submit form ke server (pindah halaman)
+                setTimeout(() => {
+                    loginForm.submit(); 
+                }, 2200); // 600ms delay + 1.4s fade
             }
         });
 

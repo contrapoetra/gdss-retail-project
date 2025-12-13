@@ -19,6 +19,7 @@ class ConsensusController extends Controller
         $latestLog = ConsensusLog::latest()->first();
 
         if (!$latestLog) {
+            // Jika belum ada log, return view kosong
             return view('evaluation.result', ['hasResult' => false]);
         }
 
@@ -33,11 +34,14 @@ class ConsensusController extends Controller
                             ->get()
                             ->groupBy('candidate_id');
 
-        // 3. Data Transparansi: Matriks TOPSIS (Sampel Data User Login)
-        $userId = Auth::id();
+        // 3. Data Transparansi: Matriks TOPSIS 
+        // FIX: Jangan pakai Auth::id() saja, karena Area Manager mungkin tidak input data.
+        // Kita ambil user pertama yang ada di tabel evaluasi sebagai sampel transparansi.
+        $sampleUser = Evaluation::first()->user_id ?? Auth::id();
+        
         $criterias = Criteria::all();
         $candidates = Candidate::all();
-        $evaluations = Evaluation::where('user_id', $userId)->get();
+        $evaluations = Evaluation::where('user_id', $sampleUser)->get();
 
         // A. Matriks Keputusan (X)
         $matrixX = [];
@@ -59,6 +63,7 @@ class ConsensusController extends Controller
             }
             $divisor = sqrt($sumSq);
             foreach($candidates as $can) {
+                // FIX: Cegah division by zero
                 $matrixR[$can->id][$crit->id] = $divisor > 0 ? $matrixX[$can->id][$crit->id] / $divisor : 0;
             }
         }
@@ -87,6 +92,7 @@ class ConsensusController extends Controller
     public function generate(BordaService $bordaService)
     {
         try {
+            // Logika kalkulasi sudah dipindah ke Service
             $bordaService->calculateConsensus(Auth::id());
             return redirect()->route('consensus.index')->with('success', 'Konsensus Borda berhasil dihitung ulang!');
         } catch (\Exception $e) {
