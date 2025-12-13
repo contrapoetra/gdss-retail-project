@@ -97,6 +97,22 @@
 
         @php
             $hasEvaluated = \App\Models\Evaluation::where('user_id', Auth::id())->exists();
+            $activePeriod = \App\Models\Period::active()->first();
+            
+            $myWinner = null;
+            if ($hasEvaluated && $activePeriod) {
+                 $result = \App\Models\TopsisResult::where('user_id', Auth::id())
+                            ->where('rank', 1)
+                            ->whereHas('candidate', function($q) use ($activePeriod) {
+                                $q->where('period_id', $activePeriod->id);
+                            })
+                            ->with('candidate')
+                            ->first();
+                if ($result && $result->candidate) {
+                    $myWinner = $result->candidate->name;
+                }
+            }
+
             // Logic Warna: Merah (Alert) jika belum, Hijau Neon (Secure) jika sudah
             $statusColor = $hasEvaluated ? 'text-emerald-400' : 'text-red-400';
             $glowColor   = $hasEvaluated ? 'shadow-emerald-500/20' : 'shadow-red-500/20';
@@ -104,7 +120,14 @@
             $cornerColor = $hasEvaluated ? 'border-emerald-500' : 'border-red-500';
             $bgGlow      = $hasEvaluated ? 'bg-emerald-500/10' : 'bg-red-500/10';
             $icon        = $hasEvaluated ? 'fa-check-circle' : 'fa-exclamation-triangle';
-            $statusText  = $hasEvaluated ? 'SUDAH MENILAI' : 'BELUM MENILAI';
+            
+             if ($hasEvaluated) {
+                $statusText = $myWinner ? strtoupper($myWinner) : 'SUDAH MENILAI';
+                $statusLabel = 'PILIHAN ANDA';
+            } else {
+                $statusText = 'BELUM MENILAI';
+                $statusLabel = 'STATUS PENILAIAN';
+            }
         @endphp
 
         {{-- CARD 2: STATUS PENILAIAN --}}
@@ -126,12 +149,12 @@
                             </span>
                         @endif
                     </div>
-                    <span class="text-[10px] font-mono {{ $hasEvaluated ? 'text-emerald-500/50' : 'text-red-500/50' }}">STATUSES</span>
+                    <span class="text-[10px] font-mono {{ $hasEvaluated ? 'text-emerald-500/50' : 'text-red-500/50' }}">{{ $statusLabel }}</span>
                 </div>
                 
                 <div>
-                    <p class="font-mono text-[10px] {{ $statusColor }} tracking-[0.2em] uppercase mb-1">Status Penilaian</p>
-                    <p class="text-2xl font-bold font-mono text-white tracking-tighter">
+                    <p class="font-mono text-[10px] {{ $statusColor }} tracking-[0.2em] uppercase mb-1">{{ $statusLabel }}</p>
+                    <p class="text-2xl font-bold font-mono text-white tracking-tighter truncate" title="{{ $statusText }}">
                         {{ $statusText }}
                     </p>
                 </div>
