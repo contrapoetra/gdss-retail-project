@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\ConsensusController; // <--- TAMBAHKAN INI
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\DashboardController; // <--- TAMBAHKAN INI
 
 // ====================================================
 // BAGIAN 1: AUTHENTICATION & UTAMA
@@ -22,20 +23,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // ====================================================
 Route::middleware(['auth'])->group(function () {
     
-    // Route untuk Area Manager
-    Route::get('/dashboard/area', function () {
-        return view('dashboard.area'); // Nanti kita buat filenya
-    })->name('dashboard.area');
-
-    // Route untuk Kepala Toko
-    Route::get('/dashboard/store', function () {
-        return view('dashboard.store'); // Nanti kita buat filenya
-    })->name('dashboard.store');
-
-    // Route untuk HR
-    Route::get('/dashboard/hr', function () {
-        return view('dashboard.hr'); // Nanti kita buat filenya
-    })->name('dashboard.hr');
+    // Unified Dashboard Controller for Decision Makers
+    Route::get('/dashboard/area', [DashboardController::class, 'index'])->name('dashboard.area');
+    Route::get('/dashboard/store', [DashboardController::class, 'index'])->name('dashboard.store');
+    Route::get('/dashboard/hr', [DashboardController::class, 'index'])->name('dashboard.hr');
 
     // --- MODUL PENILAIAN ---
     Route::get('/evaluation', [\App\Http\Controllers\EvaluationController::class, 'index'])->name('evaluation.index');
