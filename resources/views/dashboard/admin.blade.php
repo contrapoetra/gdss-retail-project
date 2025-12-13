@@ -387,10 +387,16 @@
                                     @endif
                                 </td>
                                 <td class="text-right flex justify-end gap-2 items-center pt-3">
-                                    <!-- Button View -->
+                                    <!-- Button View Candidates (Dashboard Filter) -->
                                     <a href="{{ route('dashboard.admin', ['period_id' => $period->id]) }}" 
-                                       class="text-[10px] px-2 py-1 border border-white/20 hover:bg-white/10 rounded font-mono">
-                                        <i class="fas fa-eye"></i> LIHAT
+                                       class="text-[10px] px-2 py-1 border border-white/20 hover:bg-white/10 rounded font-mono text-cyan-neon" title="Lihat Kandidat">
+                                        <i class="fas fa-users"></i> DATA
+                                    </a>
+
+                                    <!-- [ADD] Button View Results (Consensus Page) -->
+                                    <a href="{{ route('consensus.index', ['period_id' => $period->id]) }}" 
+                                       class="text-[10px] px-2 py-1 border border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 rounded font-mono" title="Lihat Hasil Akhir/Ranking">
+                                        <i class="fas fa-trophy"></i> HASIL
                                     </a>
 
                                     <!-- Button Activate -->

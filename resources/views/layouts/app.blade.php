@@ -284,13 +284,12 @@
                     <span>Penilaian</span>
                 </a>
 
-                @if(Auth::user()->role == 'area_manager')
+                {{-- [MODIFIED] Tampilkan Menu Hasil/Konsensus untuk SEMUA user agar bisa lihat arsip --}}
                 <a href="{{ route('consensus.index') }}" 
                    class="nav-item yellow {{ Request::is('consensus*') ? 'active' : '' }}">
                     <i class="fas fa-trophy"></i>
-                    <span>Konsensus</span>
+                    <span>Hasil</span>
                 </a>
-                @endif
             </div>
 
             <div class="w-auto flex justify-end border-l border-white/10 pl-8 ml-4">
