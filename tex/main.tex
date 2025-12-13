@@ -1,0 +1,532 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{minted}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{amsmath} % Added amsmath for \text support in math mode
+% \usepackage{mathptmx} % Times New Roman-like font
+
+\geometry{
+    a4paper,
+    total={170mm,257mm},
+    left=25mm,
+    top=25mm,
+    right=25mm,
+    bottom=25mm,
+}
+
+\setminted{breaklines=true,linenos=true}
+
+\title{\textbf{Laporan Teknis Pengembangan Sistem Pendukung Keputusan Kelompok (GDSS)}\\Studi Kasus: Seleksi Supervisor Toko Retail Menggunakan Metode Hibrida TOPSIS-Borda}
+\author{Dimas Atha Putra \and Bagus Achmad Syahputra \and Nuhairil Firdaus Zulal}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Pendahuluan dan Latar Belakang}
+
+\subsection{Konteks Permasalahan}
+Dalam dinamika operasional ritel modern, pemilihan seorang supervisor toko memegang peranan krusial sebagai jembatan antara manajemen pusat (Area Manager) dengan staf operasional di lapangan. Seorang supervisor harus memiliki keseimbangan kompetensi yang unik: disiplin administratif yang ketat, kemampuan memecahkan masalah operasional yang mendesak, serta kepemimpinan yang mampu memotivasi tim.
+
+Permasalahan muncul ketika manajemen dihadapkan pada sekumpulan kandidat internal yang homogen. Seringkali, terdapat 5 hingga 10 staf senior yang memiliki masa kerja hampir sama, usia yang sebaya, dan catatan kinerja yang sekilas terlihat setara. Dalam kondisi seperti ini, metode seleksi konvensional yang mengandalkan intuisi satu orang (misalnya, hanya keputusan sepihak dari Area Manager) menjadi sangat rentan terhadap bias kognitif. Subjektivitas seperti "halo effect" (menilai keseluruhan hanya dari satu kelebihan) atau kedekatan personal dapat mencederai rasa keadilan dalam organisasi.
+
+\subsection{Solusi GDSS (Group Decision Support System)}
+Untuk mengatasi tantangan tersebut, dikembangkan sebuah sistem berbasis komputer yang dirancang khusus untuk mendukung pengambilan keputusan kelompok atau \textit{Group Decision Support System} (GDSS). Sistem ini memberikan landasan matematis yang objektif bagi para pengambil keputusan.
+
+Dalam studi kasus ini, sistem melibatkan tiga pemangku kepentingan utama (\textit{Decision Makers}) dengan perspektif berbeda:
+\begin{itemize}
+    \item \textbf{Area Manager}: Memiliki fokus utama pada pencapaian target penjualan, efisiensi operasional lintas toko, dan keselarasan dengan strategi perusahaan yang lebih luas.
+    \item \textbf{Store Manager (Kepala Toko)}: Lebih berfokus pada kedisiplinan harian staf, kepatuhan terhadap prosedur operasional standar, dan kemampuan kandidat dalam mengelola tim di tingkat toko.
+    \item \textbf{HRD (Human Resources)}: Perspektif HR mencakup rekam jejak integritas, administrasi personalia, potensi pengembangan karier jangka panjang, serta kepatuhan terhadap kebijakan SDM.
+\end{itemize}
+
+\subsection{Metodologi Hibrida}
+Sistem ini menggunakan pendekatan algoritma ganda (hibrida) untuk memastikan akurasi dan keadilan dalam proses seleksi. Pendekatan ini memecah masalah besar menjadi dua tahap utama:
+\begin{itemize}
+    \item \textbf{Level Individu (TOPSIS)}: Pada tahap ini, setiap pengambil keputusan melakukan penilaian mandiri terhadap semua kandidat berdasarkan kriteria yang telah ditentukan. Metode \textit{Technique for Order of Preference by Similarity to Ideal Solution} (TOPSIS) digunakan di sini karena keunggulannya dalam menangani kriteria yang bervariasi, baik yang bersifat \textit{Benefit} (makin besar nilainya makin baik, seperti Kinerja) maupun \textit{Cost} (makin kecil nilainya makin baik, seperti Absensi), secara simultan. TOPSIS secara matematis mengukur seberapa dekat setiap kandidat dengan solusi ideal positif (kandidat terbaik) dan seberapa jauh dari solusi ideal negatif (kandidat terburuk).
+    \item \textbf{Level Kelompok (Borda Count)}: Setelah hasil peringkat dari masing-masing individu diperoleh melalui TOPSIS, hasil-hasil tersebut kemudian diagregasi menggunakan metode Voting Borda. Metode Borda dipilih karena prinsipnya yang bersifat demokratis dan kemampuannya meminimalisir konflik. Alih-alih hanya mempertimbangkan pilihan pertama, Borda memberikan poin proporsional berdasarkan setiap peringkat yang diberikan, sehingga kandidat yang "cukup disukai oleh banyak orang" memiliki peluang menang yang lebih adil dibandingkan kandidat yang "sangat disukai oleh satu orang tetapi sama sekali tidak disukai oleh yang lain". Hal ini mendorong konsensus yang lebih inklusif dan representatif terhadap preferensi kolektif.
+\end{itemize}
+
+\section{Arsitektur Data dan Kriteria Keputusan}
+
+Sistem dibangun di atas pondasi data yang terstruktur rapi, di mana variabel keputusan dikategorikan menjadi Alternatif (para kandidat supervisor) dan Kriteria (tolok ukur penilaian yang digunakan oleh Decision Makers). Struktur ini memungkinkan fleksibilitas dan ekstensibilitas sistem di masa depan.
+
+\subsection{Definisi Kriteria}
+Sistem ini mengonfigurasi 8 kriteria penilaian yang dirancang secara cermat untuk mengevaluasi setiap kandidat secara holistik. Setiap kriteria memiliki bobot tertentu yang merefleksikan tingkat kepentingannya, serta tipenya (Benefit atau Cost) yang mengindikasikan arah preferensi. Berikut adalah rincian mendalam mengenai setiap kriteria:
+
+\begin{enumerate}
+    \item \textbf{C1 - Umur (Cost, Bobot: 10\%)}
+    \begin{itemize}
+        \item \textit{Analisis}: Dalam strategi pengembangan karyawan, perusahaan seringkali mempertimbangkan potensi jangka panjang. Umur yang lebih muda diasosiasikan dengan masa kerja produktif yang lebih panjang dan potensi adaptasi yang lebih tinggi terhadap inovasi. Oleh karena itu, kriteria ini diklasifikasikan sebagai \textit{Cost}; semakin tinggi angka umur kandidat, semakin rendah preferensinya dalam penilaian.
+    \end{itemize}
+    \item \textbf{C2 - Lama Bekerja (Benefit, Bobot: 15\%)}
+    \begin{itemize}
+        \item \textit{Analisis}: Kriteria ini mengukur durasi pengabdian kandidat di perusahaan. Lama bekerja tidak hanya mencerminkan loyalitas dan komitmen, tetapi juga akumulasi pengalaman dan pemahaman mendalam tentang budaya, sistem, serta operasional internal perusahaan. Ini adalah kriteria \textit{Benefit}; semakin lama kandidat bekerja, semakin tinggi nilai positifnya.
+    \end{itemize}
+    \item \textbf{C3 - Kinerja (Benefit, Bobot: 20\%)}
+    \begin{itemize}
+        \item \textit{Analisis}: Sebagai kriteria dengan bobot tertinggi, Kinerja adalah tolok ukur utama yang merepresentasikan efektivitas dan produktivitas aktual kandidat. Penilaian kinerja didasarkan pada pencapaian target, kualitas hasil kerja, dan kepatuhan terhadap indikator kinerja utama (KPI) yang relevan. Ini adalah kriteria \textit{Benefit} yang sangat signifikan.
+    \end{itemize}
+    \item \textbf{C4 - Absensi (Cost, Bobot: 10\%)}
+    \begin{itemize}
+        \item \textit{Analisis}: Kriteria ini mengevaluasi tingkat kehadiran dan kedisiplinan kandidat. Absensi yang tinggi (termasuk izin, sakit yang tidak wajar, atau alpa) secara langsung berdampak negatif pada efisiensi operasional tim. Oleh karena itu, Absensi dikategorikan sebagai \textit{Cost}; semakin tinggi angka absensi, semakin rendah nilai kandidat.
+    \end{itemize}
+    \item \textbf{C5 - Leadership (Benefit, Bobot: 15\%)}
+    \begin{itemize}
+        \item \textit{Analisis}: Kriteria ini mengukur kemampuan kandidat dalam memimpin, mengarahkan, dan memotivasi tim kerja. Ini mencakup inisiatif, kemampuan mengambil keputusan, delegasi tugas, serta menjadi contoh positif bagi rekan kerja. Leadership adalah kriteria \textit{Benefit} yang esensial untuk posisi supervisor.
+    \end{itemize}
+    \item \textbf{C6 - Problem Solving (Benefit, Bobot: 15\%)}
+    \begin{itemize}
+        \item \textit{Analisis}: Kemampuan untuk mengidentifikasi masalah, menganalisis akar penyebabnya, dan merumuskan serta mengimplementasikan solusi yang efektif adalah krusial di lingkungan ritel yang serba cepat. Kriteria \textit{Benefit} ini menilai ketepatan dan kecepatan kandidat dalam menghadapi tantangan operasional.
+    \end{itemize}
+    \item \textbf{C7 - Integritas (Benefit, Bobot: 10\%)}
+    \begin{itemize}
+        \item \textit{Analisis}: Integritas mengacu pada kejujuran, etika kerja, dan kepercayaan. Ini sangat penting terutama dalam pengelolaan keuangan, inventori, dan informasi rahasia toko. Kriteria \textit{Benefit} ini memastikan bahwa supervisor terpilih memiliki standar moral yang tinggi.
+    \end{itemize}
+    \item \textbf{C8 - Jarak Domisili (Cost, Bobot: 5\%)}
+    \begin{itemize}
+        \item \textit{Analisis}: Kriteria ini mempertimbangkan jarak geografis antara tempat tinggal kandidat dengan lokasi toko. Meskipun memiliki bobot terkecil, jarak yang terlalu jauh dapat mempengaruhi efisiensi dan responsibilitas, terutama dalam situasi darurat atau tuntutan kerja lembur. Dikategorikan sebagai \textit{Cost}, semakin jauh jarak, semakin rendah preferensinya.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Data Alternatif (Kandidat)}
+Sistem ini dirancang untuk dapat mengelola dan mengevaluasi sejumlah kandidat secara fleksibel. Pada tahap awal implementasi, data kandidat disiapkan melalui \texttt{MasterSeeder} dengan nama-nama berikut yang akan menjadi subjek evaluasi:
+\begin{itemize}
+    \item Farel
+    \item Tio
+    \item Putra
+    \item Michael
+    \item Zaki
+\end{itemize}
+Daftar kandidat ini dapat dimodifikasi (ditambah, diubah, atau dihapus) melalui antarmuka Dashboard Admin, memberikan fleksibilitas kepada manajemen untuk memperbarui daftar kandidat sesuai dengan kebutuhan seleksi yang sedang berjalan tanpa perlu intervensi teknis pada kode sumber.
+
+\section{Implementasi Algoritma TOPSIS (Evaluasi Individu)}
+
+Logika fundamental dari proses penilaian individual diwujudkan dalam kelas \texttt{TopsisService.php}. Kelas layanan ini berfungsi sebagai mesin komputasi yang menerima data input mentah dari setiap pengambil keputusan dan mengolahnya melalui serangkaian tahapan matematis untuk menghasilkan nilai preferensi tunggal bagi setiap kandidat. Hasil ini merepresentasikan seberapa baik seorang kandidat memenuhi kriteria yang ditetapkan dari perspektif individu penilai.
+
+Berikut adalah uraian mendalam mengenai setiap langkah implementasi algoritma TOPSIS dalam sistem, disertai dengan kutipan kode sumber yang relevan:
+
+\subsection{Fungsi \texttt{calculateByUser(\$userId)} di \texttt{TopsisService.php}}
+
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{php}
+namespace App\Services;
+
+// ... (use statements)
+
+class TopsisService
+{
+    public function calculateByUser($userId)
+    {
+        // 1. PENGUMPULAN DATA
+        $criterias = Criteria::all();
+        $candidates = Candidate::all();
+        $evaluations = Evaluation::where('user_id', $userId)->get();
+
+        // 2. PEMBENTUKAN MATRIKS KEPUTUSAN (X)
+        $matrix = [];
+        foreach ($candidates as $candidate) {
+            foreach ($criterias as $criteria) {
+                $eval = $evaluations->where('candidate_id', $candidate->id)
+                                    ->where('criteria_id', $criteria->id)
+                                    ->first();
+                $score = $eval ? $eval->score : 1;
+                $matrix[$candidate->id][$criteria->id] = $score;
+            }
+        }
+
+        // 3. NORMALISASI MATRIKS (R)
+        $normalizedMatrix = [];
+        $divisors = [];
+
+        foreach ($criterias as $c) {
+            $sumSquares = 0;
+            foreach ($candidates as $can) {
+                $val = $matrix[$can->id][$c->id];
+                $sumSquares += pow($val, 2); // Kuadratkan nilai untuk sum of squares
+            }
+            $divisors[$c->id] = sqrt($sumSquares); // Akar kuadrat total
+        }
+
+        foreach ($candidates as $can) {
+            foreach ($criterias as $c) {
+                $val = $matrix[$can->id][$c->id];
+                $divisor = $divisors[$c->id] == 0 ? 1 : $divisors[$c->id];
+                $normalizedMatrix[$can->id][$c->id] = $val / $divisor;
+            }
+        }
+
+        // 4. MATRIKS TERBOBOT (Y)
+        $weightedMatrix = [];
+        foreach ($candidates as $can) {
+            foreach ($criterias as $c) {
+                $weightedMatrix[$can->id][$c->id] = $normalizedMatrix[$can->id][$c->id] * $c->weight;
+            }
+        }
+
+        // 5. SOLUSI IDEAL POSITIF (A+) DAN NEGATIF (A-)
+        $idealPositive = [];
+        $idealNegative = [];
+
+        foreach ($criterias as $c) {
+            $columnValues = array_column($weightedMatrix, $c->id);
+            if ($c->type == 'benefit') {
+                $idealPositive[$c->id] = max($columnValues);
+                $idealNegative[$c->id] = min($columnValues);
+            } else { // Cost
+                $idealPositive[$c->id] = min($columnValues);
+                $idealNegative[$c->id] = max($columnValues);
+            }
+        }
+
+        // 6. MENGHITUNG JARAK (SEPARATION MEASURE) & 7. MENGHITUNG NILAI PREFERENSI (V)
+        $results = [];
+        foreach ($candidates as $can) {
+            $distPos = 0;
+            $distNeg = 0;
+
+            foreach ($criterias as $c) {
+                $y = $weightedMatrix[$can->id][$c->id];
+                $distPos += pow($y - $idealPositive[$c->id], 2);
+                $distNeg += pow($y - $idealNegative[$c->id], 2);
+            }
+
+            $dPlus = sqrt($distPos);
+            $dMinus = sqrt($distNeg);
+
+            $totalDist = $dMinus + $dPlus;
+            $preference = $totalDist == 0 ? 0 : ($dMinus / $totalDist);
+
+            $results[] = [ /* ... */ ];
+        }
+
+        // 8. PENGURUTAN (RANKING)
+        usort($results, function($a, $b) {
+            return $b['preference_value'] <=> $a['preference_value'];
+        });
+
+        // 9. PERSISTENSI DATA
+        DB::beginTransaction();
+        try {
+            TopsisResult::where('user_id', $userId)->delete();
+            $rank = 1;
+            foreach ($results as $res) {
+                TopsisResult::create([ /* ... */ ]);
+            }
+            DB::commit();
+        } catch (\\\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+        return true;
+    }
+}
+\end{minted}
+
+\subsection{Analisis Proses TOPSIS}
+Setiap langkah dalam \texttt{calculateByUser} memiliki tujuan yang jelas untuk mengolah data penilaian:
+
+\begin{enumerate}
+    \item \textbf{Pengumpulan Data}: Sistem pertama-tama mengumpulkan seluruh data kriteria yang relevan, daftar kandidat yang akan dievaluasi, dan penilaian spesifik yang telah diberikan oleh pengguna yang sedang aktif (\texttt{\$userId}). Ini memastikan bahwa semua informasi yang diperlukan tersedia untuk perhitungan.
+    \item \textbf{Pembentukan Matriks Keputusan (X)}: Tahap ini mengubah input mentah pengguna menjadi struktur matriks $X$, di mana setiap baris merepresentasikan seorang kandidat dan setiap kolom merepresentasikan sebuah kriteria. Nilai $x_{ij}$ adalah skor yang diberikan oleh user untuk kandidat $i$ pada kriteria $j$.
+    \item \textbf{Normalisasi Matriks (R)}: Karena setiap kriteria mungkin memiliki satuan atau rentang nilai yang berbeda (misalnya, umur dalam tahun, kinerja dalam skala 1-5), normalisasi diperlukan untuk menyamakan bobot komparatifnya. Sistem menggunakan normalisasi vektor (Euclidean Normalization) dengan rumus $r_{ij} = x_{ij} / \sqrt{\sum x_{ij}^2}$.
+    \item \textbf{Matriks Terbobot (Y)}: Setelah dinormalisasi, setiap nilai $r_{ij}$ dikalikan dengan bobot kriteria $w_j$ untuk mencerminkan tingkat kepentingan kriteria tersebut dalam penilaian. Ini menghasilkan matriks terbobot $Y$ dengan rumus $y_{ij} = r_{ij} \times w_j$.
+    \item \textbf{Solusi Ideal Positif (A+)} dan \textbf{Negatif (A-)}: Ini adalah inti dari metode TOPSIS. Sistem menentukan 'kandidat ideal terbaik' (A+) dan 'kandidat ideal terburuk' (A-) secara hipotetis. Untuk kriteria \textit{Benefit}, A+ adalah nilai maksimum dan A- adalah nilai minimum dari matriks terbobot. Sebaliknya, untuk kriteria \textit{Cost}, A+ adalah nilai minimum dan A- adalah nilai maksimum.
+    \item \textbf{Menghitung Jarak (Separation Measure)}: Selanjutnya, sistem menghitung jarak Euclidean dari setiap kandidat terhadap A+ (dinotasikan sebagai $D_i^+$) dan terhadap A- (dinotasikan sebagai $D_i^-$). Jarak ini dihitung sebagai akar kuadrat dari jumlah kuadrat perbedaan antara nilai terbobot kandidat dan solusi ideal.
+    \item \textbf{Menghitung Nilai Preferensi (V)}: Tahap terakhir TOPSIS adalah menghitung nilai preferensi $V_i$ untuk setiap kandidat menggunakan rumus $V_i = D_i^- / (D_i^- + D_i^+)$. Nilai $V_i$ berkisar antara 0 hingga 1; semakin dekat nilainya ke 1, semakin baik kinerja kandidat tersebut relatif terhadap solusi ideal.
+    \item \textbf{Pengurutan (Ranking)}: Hasil \texttt{\$results} yang berisi nilai preferensi kemudian diurutkan secara menurun, sehingga kandidat dengan nilai preferensi tertinggi berada di peringkat pertama.
+    \item \textbf{Persistensi Data}: Seluruh hasil perhitungan TOPSIS, termasuk nilai preferensi dan peringkat, disimpan ke dalam tabel \texttt{topsis\_results}. Proses ini dibungkus dalam transaksi database untuk menjamin integritas data.
+\end{enumerate}
+
+\section{Implementasi Algoritma Borda Count (Konsensus Kelompok)}
+
+Setelah setiap pengambil keputusan memiliki hasil peringkat individual dari metode TOPSIS, langkah selanjutnya adalah menggabungkan preferensi-preferensi tersebut menjadi satu keputusan kelompok yang koheren. Tugas ini diemban oleh kelas \texttt{BordaService.php}, yang menerapkan algoritma Borda Count untuk mencapai konsensus.
+
+\subsection{Fungsi \texttt{calculateConsensus(\$userId)} di \texttt{BordaService.php}}
+
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{php}
+namespace App\Services;
+
+// ... (use statements)
+
+class BordaService
+{
+    protected $topsisService;
+
+    public function __construct(TopsisService $topsisService)
+    {
+        $this->topsisService = $topsisService;
+    }
+
+    public function calculateConsensus($userId)
+    {
+        // VALIDASI OTORITAS
+        $user = User::find($userId);
+        if ($user->role !== 'area_manager') {
+            throw new \Exception("Akses Ditolak. Hanya Area Manager yang bisa memicu konsensus.");
+        }
+
+        // LANGKAH 1: RE-KALKULASI TOPSIS MASSAL (jika diperlukan)
+        $evaluatorIds = Evaluation::select('user_id')->distinct()->pluck('user_id');
+        if ($evaluatorIds->isEmpty()) {
+             throw new \Exception("Data Kosong: Belum ada penilaian masuk.");
+        }
+        foreach ($evaluatorIds as $eid) {
+            $this->topsisService->calculateByUser($eid);
+        }
+
+        // LANGKAH 2: PENGAMBILAN DATA PERINGKAT
+        $topsisResults = TopsisResult::all();
+
+        // LANGKAH 3: ALGORITMA BORDA COUNT
+        $totalCandidates = Candidate::count();
+        $bordaScores = [];
+
+        foreach ($topsisResults as $result) {
+            $candidateId = $result->candidate_id;
+            $rank = $result->rank;
+
+            // Rumus Konversi Ranking ke Poin Borda
+            $points = $totalCandidates - $rank + 1;
+
+            // Akumulasi Poin untuk setiap kandidat
+            if (!isset($bordaScores[$candidateId])) {
+                $bordaScores[$candidateId] = 0;
+            }
+            $bordaScores[$candidateId] += $points;
+        }
+
+        // LANGKAH 4: PENYIMPANAN HASIL FINAL
+        DB::beginTransaction();
+        try {
+            $log = ConsensusLog::create(['triggered_by' => $userId]);
+            arsort($bordaScores); // Urutkan dari poin tertinggi
+
+            $finalRank = 1;
+            foreach ($bordaScores as $candId => $totalPoints) {
+                BordaResult::create([
+                    'consensus_log_id' => $log->id,
+                    'candidate_id' => $candId,
+                    'total_points' => $totalPoints,
+                    'final_rank' => $finalRank++
+                ]);
+            }
+            DB::commit();
+        } catch (\\\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+        return $log->id;
+    }
+}
+\end{minted}
+
+\subsection{Analisis Logika Borda}
+Metode Borda Count adalah sebuah sistem voting yang dirancang untuk memilih kandidat yang paling "dapat diterima" oleh sebagian besar pemilih. Ini sangat efektif dalam situasi di mana kompromi dan konsensus diperlukan.
+
+\begin{enumerate}
+    \item \textbf{Validasi Otoritas}: Sebelum memulai proses konsensus, sistem secara ketat memverifikasi peran pengguna yang memicu perhitungan. Hanya pengguna dengan peran \texttt{area\_manager} yang diizinkan untuk menginisiasi perhitungan Borda. Ini menjaga integritas proses pengambilan keputusan kelompok agar tidak dapat dimanipulasi oleh pihak yang tidak berwenang.
+    \item \textbf{Re-Kalkulasi TOPSIS Massal}: Untuk memastikan bahwa perhitungan Borda selalu menggunakan data peringkat individu yang paling baru, sistem secara proaktif memicu fungsi \texttt{calculateByUser} dari \texttt{TopsisService} untuk setiap \texttt{user\_id} yang teridentifikasi telah melakukan evaluasi.
+    \item \textbf{Pengambilan Data Peringkat}: Setelah memastikan semua peringkat individu adalah yang terbaru, sistem mengambil semua hasil \texttt{TopsisResult} yang ada dari database. Data ini menjadi fondasi untuk perhitungan poin Borda.
+    \item \textbf{Algoritma Borda Count}: Inti dari algoritma Borda terletak pada konversi peringkat menjadi poin. Untuk setiap penilai dan setiap kandidat, peringkat TOPSIS kandidat tersebut diubah menjadi poin Borda menggunakan rumus sederhana: $\text{poin} = (\text{total kandidat} - \text{peringkat} + 1)$.
+    \item \textbf{Akumulasi Poin}: Poin Borda yang diperoleh setiap kandidat dari seluruh penilai kemudian diakumulasikan. Jika seorang kandidat mendapatkan peringkat tinggi dari banyak penilai, total poin Borda-nya akan meningkat secara signifikan.
+    \item \textbf{Penyimpanan Hasil Final}: Setelah semua poin diakumulasikan, kandidat diurutkan berdasarkan total poin Borda mereka secara menurun. Kandidat dengan poin tertinggi akan mendapatkan peringkat final 1. Hasil ini disimpan ke dalam database untuk menjamin keutuhan data.
+\end{enumerate}
+
+\section{Desain Basis Data (Database Schema)}
+
+Fondasi operasional sistem ini terletak pada skema basis data relasional yang dirancang untuk secara efisien menyimpan, mengelola, dan menghubungkan semua data yang relevan dengan proses penilaian dan konsensus. Setiap tabel dirancang dengan mempertimbangkan integritas data dan relasi antar entitas, yang didefinisikan melalui Laravel Migrations.
+
+\subsection{Tabel \texttt{users}}
+Menyimpan informasi dasar pengguna sistem, termasuk peran (\texttt{role}) yang sangat penting untuk otorisasi akses ke berbagai modul aplikasi.
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{php}
+Schema::create('users', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->string('email')->unique();
+    $table->timestamp('email_verified_at')->nullable();
+    $table->string('password');
+    $table->string('role'); // e.g., 'admin', 'area_manager', 'store_manager', 'hr'
+    $table->rememberToken();
+    $table->timestamps();
+});
+\end{minted}
+
+\subsection{Tabel \texttt{candidates}}
+Menyimpan profil setiap individu yang menjadi alternatif dalam proses seleksi supervisor.
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{php}
+Schema::create('candidates', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->integer('age');
+    $table->integer('experience_year');
+    $table->timestamps();
+});
+\end{minted}
+
+\subsection{Tabel \texttt{criterias}}
+Menyimpan definisi dari setiap kriteria penilaian, termasuk kode unik, nama, tipe (benefit/cost), dan bobot.
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{php}
+Schema::create('criterias', function (Blueprint $table) {
+    $table->id();
+    $table->string('code')->unique();
+    $table->string('name');
+    $table->enum('type', ['benefit', 'cost']);
+    $table->float('weight', 4, 3); // Example: 0.100, 0.200
+    $table->timestamps();
+});
+\end{minted}
+
+\subsection{Tabel \texttt{evaluations}}
+Ini adalah tabel transaksi utama yang mencatat setiap penilaian individu oleh seorang pengguna terhadap seorang kandidat berdasarkan kriteria tertentu. Setiap baris merepresentasikan satu sel dalam matriks penilaian mentah.
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{php}
+Schema::create('evaluations', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Penilai
+    $table->foreignId('candidate_id')->constrained()->onDelete('cascade'); // Kandidat yang dinilai
+    $table->foreignId('criteria_id')->constrained()->onDelete('cascade'); // Kriteria yang dinilai
+    $table->integer('score'); // Nilai aktual (1-5) yang diberikan
+    $table->timestamps();
+});
+\end{minted}
+
+\subsection{Tabel \texttt{topsis\_results}}
+Tabel ini berfungsi sebagai penyimpanan untuk hasil olahan algoritma TOPSIS secara individual. Setiap baris mencatat nilai preferensi dan peringkat seorang kandidat dari perspektif satu penilai.
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{php}
+Schema::create('topsis_results', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->onDelete('cascade');
+    $table->foreignId('candidate_id')->constrained()->onDelete('cascade');
+    $table->float('preference_value', 8, 4); // Nilai V (0.0 s/d 1.0) dengan presisi
+    $table->integer('rank'); // Peringkat individu (1, 2, 3...)
+    $table->timestamps();
+});
+\end{minted}
+
+\subsection{Tabel \texttt{consensus\_logs}}
+Tabel ini mencatat setiap kali proses konsensus Borda Count dipicu, termasuk siapa yang memicunya dan kapan. Ini penting untuk audit dan transparansi.
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{php}
+Schema::create('consensus_logs', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('triggered_by')->constrained('users')->onDelete('cascade'); // ID Area Manager
+    $table->timestamps();
+});
+\end{minted}
+
+\subsection{Tabel \texttt{borda\_results}}
+Tabel final ini menyimpan hasil akhir dari perhitungan Borda Count, yaitu peringkat konsensus kelompok. Setiap baris merepresentasikan hasil seorang kandidat dalam satu sesi konsensus.
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{php}
+Schema::create('borda_results', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('consensus_log_id')->constrained('consensus_logs')->onDelete('cascade');
+    $table->foreignId('candidate_id')->constrained()->onDelete('cascade');
+    $table->integer('total_points'); // Total poin Borda yang terkumpul
+    $table->integer('final_rank'); // Peringkat final keputusan kelompok
+    $table->timestamps();
+});
+\end{minted}
+
+\section{Implementasi Antarmuka Pengguna (User Interface)}
+
+Desain antarmuka pengguna (UI) dari sistem ini dikembangkan dengan filosofi untuk memberikan pengalaman yang intuitif dan fungsional, sekaligus membedakan peran pengguna secara visual. Dua tema desain yang kontras diterapkan untuk memisahkan konteks tugas secara tegas, menggunakan Tailwind CSS untuk styling.
+
+\subsection{Halaman Autentikasi}
+Ini adalah titik masuk utama ke dalam aplikasi. Halaman login dirancang minimalis namun informatif, memungkinkan pengguna untuk memasukkan kredensial mereka. Setelah otentikasi berhasil, sistem akan mengarahkan pengguna ke dashboard yang sesuai dengan peran mereka.
+
+\subsection{Dashboard Admin (Tema: Cyberpunk / Neon)}
+Antarmuka untuk administrator didesain dengan tema "Cyberpunk" yang khas, menggunakan palet warna gelap pekat yang dikombinasikan dengan aksen neon mencolok (ungu dan cyan) serta efek \textit{glitch} halus. Estetika ini menegaskan kesan canggih dan futuristik dari sistem, di mana administrator memiliki kendali penuh atas konfigurasi dan data dasar.
+
+\begin{itemize}
+    \item \textbf{Manajemen User}: Administrator dapat membuat, memperbarui, dan mengelola akun pengguna lain, termasuk mengatur peran mereka. Fitur penting adalah kemampuan untuk mereset kata sandi pengguna.
+    \item \textbf{Manajemen Kandidat}: Modul ini memungkinkan administrator untuk menambah, mengubah detail, atau menghapus data kandidat.
+    \item \textbf{Manajemen Kriteria}: Admin dapat mendefinisikan kriteria baru, mengubah nama, jenis (Benefit/Cost), dan yang terpenting, menyesuaikan bobot setiap kriteria secara dinamis.
+\end{itemize}
+
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{html}
+<!-- Kutipan kode dari admin.blade.php yang menunjukkan struktur tabel kriteria -->
+<table class="w-full tech-table text-sm">
+    <thead>
+        <tr>
+            <th>Kode</th>
+            <th>Nama</th>
+            <th>Bobot</th>
+            <th class="text-right">Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($criterias as $crit)
+        <tr>
+            <!-- ... form input untuk update kriteria ... -->
+            <td>
+                <input type="number" step="0.01" min="0" max="1" name="weight"
+                       value="{{ number_format($crit->weight, 4, '.', '') }}"
+                       class="bg-transparent border-b border-white/10 w-16 text-xs focus:border-purple-neon focus:outline-none py-1 text-center criteria-weight-input">
+            </td>
+            <!-- ... tombol aksi ... -->
+        </tr>
+        @endforeach
+    </tbody>
+</table>
+\end{minted}
+
+\subsection{Halaman Penilaian (Tema: Military / Terminal)}
+Antarmuka bagi para pengambil keputusan (Area Manager, Store Manager, HR) dirancang menyerupai terminal data taktis, dengan dominasi warna hijau zamrud (\textit{Emerald Green}) dan font monospasi yang memberikan kesan formalitas, ketegasan, dan presisi data.
+
+\begin{itemize}
+    \item \textbf{Formulir Matriks Penilaian}: Pengguna disajikan dengan tabel matriks di mana setiap baris adalah kandidat dan setiap kolom adalah kriteria. Setiap sel berisi \textit{dropdown} yang memungkinkan pengguna memilih skor dari 1 (Sangat Kurang) hingga 5 (Sangat Baik).
+    \item \textbf{Mekanisme Penyimpanan Otomatis}: Ketika tombol "Simpan" ditekan, sistem secara otomatis memicu perhitungan TOPSIS di latar belakang.
+    \item \textbf{Umpan Balik Visual}: Jika pengguna telah melakukan penilaian sebelumnya, sebuah peringatan visual akan ditampilkan.
+\end{itemize}
+
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{html}
+<!-- Kutipan kode dari input.blade.php yang menampilkan struktur input skor -->
+<select name="scores[{{ $candidate->id }}][{{ $criteria->id }}]"
+        class="w-full p-2 pl-3 bg-[#0a101e] border border-emerald-500/30 text-gray-200 rounded text-xs font-mono ... cursor-pointer" required>
+    <option value="" disabled selected class="text-gray-600">- INPUT -</option>
+    <option value="1" class="bg-gray-900 text-red-400 font-bold">1 - [SANGAT KURANG]</option>
+    <!-- ... opsi lainnya ... -->
+    <option value="5" class="bg-gray-900 text-emerald-400 font-bold">5 - [SANGAT BAIK]</option>
+</select>
+\end{minted}
+
+\subsection{Halaman Hasil Konsensus (Tema: Clean / Professional)}
+Halaman ini menyajikan titik kulminasi dari seluruh proses GDSS. Dirancang dengan tampilan yang bersih dan profesional, halaman ini memberikan gambaran yang jelas mengenai keputusan kelompok.
+
+\begin{itemize}
+    \item \textbf{Tabel Peringkat Final}: Menampilkan kandidat yang telah diurutkan berdasarkan total poin Borda.
+    \item \textbf{Transparansi Data (Kotak Hitam Algoritma)}: Untuk memastikan akuntabilitas, halaman ini menyediakan rincian perhitungan. Pengguna dapat melihat peringkat individual, Matriks Normalisasi (R), dan Matriks Terbobot (Y) dari salah satu user sebagai sampel.
+\end{itemize}
+
+\begin{minted}[frame=lines,framesep=2mm,baselinestretch=1.2,bgcolor=white,fontsize=\footnotesize]{php}
+// Kutipan kode dari ConsensusController.php untuk transparansi data
+// B. Matriks Normalisasi (R)
+$matrixR = [];
+foreach($criterias as $crit) {
+    $sumSq = 0;
+    foreach($candidates as $can) {
+        $sumSq += pow($matrixX[$can->id][$crit->id], 2);
+    }
+    $divisor = sqrt($sumSq);
+    foreach($candidates as $can) {
+        $matrixR[$can->id][$crit->id] = $divisor > 0 ? $matrixX[$can->id][$crit->id] / $divisor : 0;
+    }
+}
+\end{minted}
+
+\section{Kesimpulan}
+
+Pengembangan Group Decision Support System (GDSS) ini telah berhasil membangun sebuah platform yang kuat dan transparan untuk memfasilitasi pengambilan keputusan kompleks dalam pemilihan supervisor toko retail. Dengan mengintegrasikan metodologi TOPSIS untuk penilaian individu yang presisi dan Borda Count untuk agregasi preferensi kelompok yang adil, sistem ini mampu mencapai tujuan utamanya:
+\begin{itemize}
+    \item \textbf{Meningkatkan Objektivitas}: Mengurangi secara signifikan bias subjektif yang sering terjadi dalam proses seleksi manual.
+    \item \textbf{Memastikan Transparansi}: Setiap langkah perhitungan, dari input mentah hingga hasil akhir, dapat dilacak dan dijelaskan, membangun kepercayaan terhadap keputusan.
+    \item \textbf{Mendorong Konsensus}: Dengan metode Borda, keputusan akhir merefleksikan pilihan yang paling dapat diterima oleh mayoritas pengambil keputusan.
+    \item \textbf{Efisiensi}: Mengotomatiskan proses perhitungan yang rumit, memungkinkan manajemen untuk fokus pada analisis strategis dan wawancara kualitatif.
+\end{itemize}
+
+Sistem GDSS ini merupakan instrumen strategis untuk meningkatkan efektivitas manajemen sumber daya manusia di lingkungan ritel, memastikan bahwa talenta terbaik dan paling sesuai akan terpilih untuk posisi kepemimpinan, yang pada akhirnya berkontribusi pada kesuksesan operasional toko.
+
+\end{document}

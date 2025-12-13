@@ -14,13 +14,23 @@ use Illuminate\Support\Facades\Auth;
 
 class ConsensusController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $latestLog = ConsensusLog::latest()->first();
+        // 1. Determine Period
+        $activePeriod = \App\Models\Period::where('is_active', true)->first();
+        $selectedPeriodId = $request->query('period_id', $activePeriod ? $activePeriod->id : null);
+        $periods = \App\Models\Period::orderBy('created_at', 'desc')->get();
+
+        // 2. Fetch Latest Log for Selected Period
+        $latestLog = ConsensusLog::where('period_id', $selectedPeriodId)->latest()->first();
 
         if (!$latestLog) {
             // Jika belum ada log, return view kosong
-            return view('evaluation.result', ['hasResult' => false]);
+            return view('evaluation.result', [
+                'hasResult' => false,
+                'periods' => $periods,
+                'selectedPeriodId' => $selectedPeriodId
+            ]);
         }
 
         // 1. Hasil Final Borda
@@ -31,17 +41,29 @@ class ConsensusController extends Controller
 
         // 2. Data Transparansi: Rincian Poin Borda
         $topsisBreakdown = TopsisResult::with(['user', 'candidate'])
+                            ->whereHas('candidate', function($q) use ($selectedPeriodId) {
+                                $q->where('period_id', $selectedPeriodId);
+                            })
                             ->get()
                             ->groupBy('candidate_id');
 
         // 3. Data Transparansi: Matriks TOPSIS 
         // FIX: Jangan pakai Auth::id() saja, karena Area Manager mungkin tidak input data.
-        // Kita ambil user pertama yang ada di tabel evaluasi sebagai sampel transparansi.
-        $sampleUser = Evaluation::first()->user_id ?? Auth::id();
+        // Kita ambil user pertama yang ada di tabel evaluasi (untuk kandidat periode ini) sebagai sampel transparansi.
+        
+        $sampleEvaluation = Evaluation::whereHas('candidate', function($q) use ($selectedPeriodId) {
+            $q->where('period_id', $selectedPeriodId);
+        })->first();
+
+        $sampleUser = $sampleEvaluation ? $sampleEvaluation->user_id : Auth::id();
         
         $criterias = Criteria::all();
-        $candidates = Candidate::all();
-        $evaluations = Evaluation::where('user_id', $sampleUser)->get();
+        $candidates = Candidate::where('period_id', $selectedPeriodId)->get();
+        $evaluations = Evaluation::where('user_id', $sampleUser)
+                        ->whereHas('candidate', function($q) use ($selectedPeriodId) {
+                            $q->where('period_id', $selectedPeriodId);
+                        })
+                        ->get();
 
         // A. Matriks Keputusan (X)
         $matrixX = [];
@@ -85,7 +107,9 @@ class ConsensusController extends Controller
             'candidates' => $candidates,
             'matrixX' => $matrixX,
             'matrixR' => $matrixR,
-            'matrixY' => $matrixY
+            'matrixY' => $matrixY,
+            'periods' => $periods,
+            'selectedPeriodId' => $selectedPeriodId
         ]);
     }
 

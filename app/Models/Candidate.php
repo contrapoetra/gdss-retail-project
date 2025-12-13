@@ -11,8 +11,14 @@ class Candidate extends Model
     
     // KUNCI: Hanya kolom ini yang boleh diisi via form (Mass Assignment)
     protected $fillable = [
+        'period_id',
         'name', 
         'age', 
         'experience_year'
     ];
+
+    public function period()
+    {
+        return $this->belongsTo(Period::class);
+    }
 }

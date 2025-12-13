@@ -22,3 +22,11 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# tex stuff
+*.pdf
+*.aux
+*.log
+*.toc
+*.out
+/tex/_minted/

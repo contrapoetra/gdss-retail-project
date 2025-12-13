@@ -28,31 +28,42 @@ class BordaService
             throw new \Exception("Akses Ditolak. Hanya Area Manager yang bisa memicu konsensus.");
         }
 
+        // Tentukan Active Period
+        $activePeriod = \App\Models\Period::where('is_active', true)->first();
+        if (!$activePeriod) {
+            throw new \Exception("Tidak ada periode aktif.");
+        }
+        $periodId = $activePeriod->id;
+
         // === [FIX UTAMA: AUTO-CALCULATE TOPSIS] ===
         // Sebelum Borda jalan, kita wajib hitung TOPSIS untuk setiap user yang sudah input nilai.
         
-        // Ambil ID semua user yang sudah melakukan evaluasi
-        $evaluatorIds = Evaluation::select('user_id')->distinct()->pluck('user_id');
+        // Ambil ID semua user yang sudah melakukan evaluasi DI PERIODE INI
+        $evaluatorIds = Evaluation::whereHas('candidate', function($q) use ($periodId) {
+            $q->where('period_id', $periodId);
+        })->select('user_id')->distinct()->pluck('user_id');
 
         if ($evaluatorIds->isEmpty()) {
-            throw new \Exception("Data Kosong: Belum ada Decision Maker yang melakukan penilaian.");
+            throw new \Exception("Data Kosong: Belum ada Decision Maker yang melakukan penilaian di periode aktif.");
         }
 
-        // Hitung ulang TOPSIS untuk masing-masing user tersebut
+        // Hitung ulang TOPSIS untuk masing-masing user tersebut pada periode ini
         foreach ($evaluatorIds as $eid) {
-            $this->topsisService->calculateByUser($eid);
+            $this->topsisService->calculateByUser($eid, $periodId);
         }
         // ==========================================
 
-        // 2. Ambil Hasil TOPSIS yang BARU SAJA dihitung
-        $topsisResults = TopsisResult::all();
+        // 2. Ambil Hasil TOPSIS yang BARU SAJA dihitung (Hanya periode ini)
+        $topsisResults = TopsisResult::whereHas('candidate', function($q) use ($periodId) {
+            $q->where('period_id', $periodId);
+        })->get();
 
         if ($topsisResults->isEmpty()) {
             throw new \Exception("Gagal menghitung TOPSIS. Pastikan data kriteria dan bobot lengkap.");
         }
 
         // 3. Algoritma Borda Count
-        $totalCandidates = Candidate::count();
+        $totalCandidates = Candidate::where('period_id', $periodId)->count();
         $bordaScores = [];
 
         foreach ($topsisResults as $result) {
@@ -72,9 +83,10 @@ class BordaService
         // 4. Simpan Hasil ke Database
         DB::beginTransaction();
         try {
-            // Buat Log Baru
+            // Buat Log Baru dengan Period ID
             $log = ConsensusLog::create([
-                'triggered_by' => $userId
+                'triggered_by' => $userId,
+                'period_id' => $periodId
             ]);
 
             // Sort skor dari tertinggi ke terendah

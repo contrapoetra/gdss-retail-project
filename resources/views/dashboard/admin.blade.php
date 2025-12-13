@@ -326,6 +326,91 @@
             </div>
         </div>
 
+        <!-- PANEL MANAJEMEN PERIODE -->
+        <div class="holo-card rounded-xl mb-12">
+            <div class="p-4 border-b border-white/5 bg-pink-900/20 flex justify-between items-center">
+                <h3 class="font-bold font-mono text-pink-500 flex items-center gap-2">
+                    <i class="fas fa-calendar-alt"></i> MANAJEMEN PERIODE
+                </h3>
+                <div class="h-1 w-24 bg-pink-500 shadow-[0_0_10px_#ec4899]"></div>
+            </div>
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- CREATE PERIOD -->
+                <div class="lg:col-span-1">
+                    <form action="{{ route('admin.period.store') }}" method="POST" class="flex flex-col gap-4">
+                        @csrf
+                        <div>
+                            <label class="text-[10px] font-mono text-pink-500 block mb-2 tracking-widest">NAMA PERIODE</label>
+                            <input type="text" name="name" placeholder="Ex: Selection 2024" class="tech-input w-full px-3 py-2 rounded text-sm" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] font-mono text-pink-500 block mb-2 tracking-widest">MULAI</label>
+                                <input type="date" name="start_date" class="tech-input w-full px-3 py-2 rounded text-sm">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-mono text-pink-500 block mb-2 tracking-widest">SELESAI</label>
+                                <input type="date" name="end_date" class="tech-input w-full px-3 py-2 rounded text-sm">
+                            </div>
+                        </div>
+                        <button type="submit" class="tech-btn px-4 py-2 rounded text-xs border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-black">
+                            BUAT PERIODE
+                        </button>
+                    </form>
+                </div>
+
+                <!-- LIST PERIODS -->
+                <div class="lg:col-span-2 overflow-y-auto max-h-[200px]">
+                    <table class="w-full tech-table text-sm">
+                        <thead>
+                            <tr>
+                                <th class="text-pink-500!">Periode</th>
+                                <th class="text-pink-500!">Status</th>
+                                <th class="text-pink-500! text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($periods as $period)
+                            <tr class="{{ $selectedPeriodId == $period->id ? 'bg-pink-500/10' : '' }}">
+                                <td>
+                                    <span class="font-bold block">{{ $period->name }}</span>
+                                    <span class="text-[10px] text-gray-400">
+                                        {{ $period->start_date ? $period->start_date->format('d M Y') : '-' }} s/d 
+                                        {{ $period->end_date ? $period->end_date->format('d M Y') : '-' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if($period->is_active)
+                                        <span class="border border-green-500 text-green-500 px-2 py-1 rounded text-[10px] font-mono animate-pulse">AKTIF (INPUT)</span>
+                                    @else
+                                        <span class="text-gray-500 text-[10px] font-mono">ARSIP</span>
+                                    @endif
+                                </td>
+                                <td class="text-right flex justify-end gap-2 items-center pt-3">
+                                    <!-- Button View -->
+                                    <a href="{{ route('dashboard.admin', ['period_id' => $period->id]) }}" 
+                                       class="text-[10px] px-2 py-1 border border-white/20 hover:bg-white/10 rounded font-mono">
+                                        <i class="fas fa-eye"></i> LIHAT
+                                    </a>
+
+                                    <!-- Button Activate -->
+                                    @if(!$period->is_active)
+                                    <form action="{{ route('admin.period.activate', $period->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="text-[10px] px-2 py-1 border border-green-500/50 text-green-500 hover:bg-green-500/10 rounded font-mono" title="Aktifkan untuk input data">
+                                            <i class="fas fa-check"></i> SET AKTIF
+                                        </button>
+                                    </form>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         @php
             $criteriaCount = $criterias->count();
             $nextCodeNumber = $criteriaCount + 1;
@@ -340,6 +425,11 @@
                 <div class="p-4 border-b border-white/5 bg-blue-900/20 flex justify-between items-center">
                     <h3 class="font-bold font-mono text-cyan-neon flex items-center gap-2">
                         <i class="fas fa-user-tie"></i> DATA KANDIDAT
+                        @if($selectedPeriodId)
+                            <span class="text-[10px] bg-cyan-900/50 px-2 py-1 rounded ml-2 border border-cyan-500/30">
+                                FILTER: {{ $periods->firstWhere('id', $selectedPeriodId)->name ?? 'Unknown' }}
+                            </span>
+                        @endif
                     </h3>
                     <div class="text-[10px] font-mono text-gray-500">CANDIDATES</div>
                 </div>
@@ -347,6 +437,7 @@
                 <div class="p-6 flex-1">
                     
                     <!-- FORM TAMBAH KANDIDAT -->
+                    @if($activePeriod && $activePeriod->id == $selectedPeriodId)
                     <form action="{{ route('admin.candidate.store') }}" method="POST" class="mb-8 grid grid-cols-4 gap-4 items-end">
                         @csrf
                         
@@ -398,6 +489,15 @@
                             </button>
                         </div>
                     </form>
+                    @else
+                    <div class="mb-8 p-4 border border-yellow-500/30 bg-yellow-900/10 rounded text-center">
+                        <p class="text-xs text-yellow-500 font-mono">
+                            <i class="fas fa-lock"></i> 
+                            MODE ARSIP: Tidak dapat menambah kandidat di periode ini.
+                            <br>Aktifkan periode ini atau pilih periode aktif untuk mengedit.
+                        </p>
+                    </div>
+                    @endif
 
                     <!-- TABEL EDIT KANDIDAT -->
                     <div class="overflow-y-auto max-h-[300px] pr-2">

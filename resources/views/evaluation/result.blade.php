@@ -125,6 +125,24 @@
         @endif
     </div>
 
+    {{-- [ADD] PERIOD SWITCHER --}}
+    @if(isset($periods) && $periods->count() > 0)
+        <div class="mb-4 flex justify-end no-print animate-slide-up delay-100">
+            <form action="{{ route('consensus.index') }}" method="GET" class="flex items-center gap-2 bg-[#0B1120] px-3 py-2 rounded border border-yellow-500/20 shadow-[0_0_10px_rgba(234,179,8,0.1)]">
+                <label class="text-[10px] font-mono text-yellow-500 uppercase tracking-wider">
+                    <i class="fas fa-calendar-alt mr-1"></i> Filter Periode:
+                </label>
+                <select name="period_id" onchange="this.form.submit()" class="bg-gray-900 text-white text-xs py-1 px-2 rounded border border-gray-700 focus:border-yellow-500 outline-none font-mono">
+                    @foreach($periods as $p)
+                        <option value="{{ $p->id }}" {{ isset($selectedPeriodId) && $selectedPeriodId == $p->id ? 'selected' : '' }}>
+                            {{ $p->name }} @if($p->is_active) [AKTIF] @endif
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
+    @endif
+
     {{-- 5. TOMBOL AKSI (CYBERPUNK STYLE) --}}
     <div class="mb-8 flex flex-col md:flex-row justify-between items-center no-print gap-4 relative z-10 animate-slide-up delay-100">
         {{-- [MODIFIED] Ganti window.print() dengan generatePDF() --}}

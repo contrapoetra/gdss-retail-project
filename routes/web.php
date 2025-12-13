@@ -52,6 +52,10 @@ Route::middleware(['auth'])->group(function () {
     // Aksi Admin (Ganti Password)
     Route::put('/admin/user/{id}/change-password', [\App\Http\Controllers\AdminController::class, 'changePassword'])->name('admin.changePassword');
     
+    // Period CRUD
+    Route::post('/admin/period', [\App\Http\Controllers\AdminController::class, 'storePeriod'])->name('admin.period.store');
+    Route::post('/admin/period/{id}/activate', [\App\Http\Controllers\AdminController::class, 'setActivePeriod'])->name('admin.period.activate');
+
     // Kandidat CRUD
     Route::post('/admin/candidate', [\App\Http\Controllers\AdminController::class, 'storeCandidate'])->name('admin.candidate.store');
     Route::put('/admin/candidate/{id}', [\App\Http\Controllers\AdminController::class, 'updateCandidate'])->name('admin.candidate.update');

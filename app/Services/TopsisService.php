@@ -11,16 +11,31 @@ use Illuminate\Support\Facades\DB;
 class TopsisService
 {
     /**
-     * Fungsi Utama: Menghitung TOPSIS untuk 1 User Tertentu
+     * Fungsi Utama: Menghitung TOPSIS untuk 1 User Tertentu pada Periode Tertentu
      */
-    public function calculateByUser($userId)
+    public function calculateByUser($userId, $periodId = null)
     {
-        // 1. Ambil Data Kriteria & Kandidat
+        // Jika periodId null, coba ambil active period default (fallback)
+        if (!$periodId) {
+             $active = \App\Models\Period::where('is_active', true)->first();
+             if ($active) $periodId = $active->id;
+             else return false; // Tidak bisa hitung tanpa periode
+        }
+
+        // 1. Ambil Data Kriteria & Kandidat (Hanya periode ini)
         $criterias = Criteria::all();
-        $candidates = Candidate::all();
+        $candidates = Candidate::where('period_id', $periodId)->get();
         
-        // Ambil semua penilaian user ini sekaligus untuk efisiensi (Eager Loading)
-        $evaluations = Evaluation::where('user_id', $userId)->get();
+        if ($candidates->isEmpty()) {
+            return false;
+        }
+
+        // Ambil penilaian user ini hanya untuk kandidat di periode ini
+        $evaluations = Evaluation::where('user_id', $userId)
+                        ->whereHas('candidate', function($q) use ($periodId) {
+                            $q->where('period_id', $periodId);
+                        })
+                        ->get();
 
         // Jika user belum menilai sama sekali, stop proses
         if ($evaluations->isEmpty()) {
@@ -36,7 +51,7 @@ class TopsisService
                                     ->where('criteria_id', $criteria->id)
                                     ->first();
                 
-                // Jika belum dinilai, default 1 (mencegah error), idealnya dicegah di Frontend
+                // Jika belum dinilai, default 1 (mencegah error)
                 $score = $eval ? $eval->score : 1; 
                 $matrix[$candidate->id][$criteria->id] = $score;
             }
@@ -120,15 +135,19 @@ class TopsisService
         }
 
         // 7. Sorting Ranking (Nilai V tertinggi = Rank 1)
-        // Kita urutkan array $results berdasarkan key 'preference_value' secara Descending
         usort($results, function($a, $b) {
             return $b['preference_value'] <=> $a['preference_value'];
         });
 
-        // 8. Simpan ke Database (Reset data lama user ini)
-        DB::beginTransaction(); // Pakai transaksi biar aman
+        // 8. Simpan ke Database (Reset data lama user ini DI PERIODE INI)
+        DB::beginTransaction(); 
         try {
-            TopsisResult::where('user_id', $userId)->delete();
+            // Hapus hasil lama user ini yang kandidatnya ada di periode ini
+            TopsisResult::where('user_id', $userId)
+                ->whereHas('candidate', function($q) use ($periodId) {
+                    $q->where('period_id', $periodId);
+                })
+                ->delete();
 
             $rank = 1;
             foreach ($results as $res) {

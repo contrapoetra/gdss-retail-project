@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Candidate;
 use App\Models\Criteria;
 use App\Models\Evaluation;
+use App\Models\Period;
 use App\Services\TopsisService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,14 +23,29 @@ class EvaluationController extends Controller
     // 1. Tampilkan Form Input
     public function index()
     {
-        // Cek apakah user sudah pernah menilai?
-        $hasEvaluated = Evaluation::where('user_id', Auth::id())->exists();
+        $activePeriod = Period::where('is_active', true)->first();
 
-        // Ambil data master
-        $candidates = Candidate::all();
+        if (!$activePeriod) {
+             return view('evaluation.input', [
+                 'candidates' => collect([]), 
+                 'criterias' => Criteria::all(), 
+                 'hasEvaluated' => false,
+                 'error' => 'Tidak ada periode seleksi yang aktif saat ini.'
+             ]);
+        }
+
+        // Cek apakah user sudah pernah menilai di periode ini?
+        $hasEvaluated = Evaluation::where('user_id', Auth::id())
+            ->whereHas('candidate', function($q) use ($activePeriod) {
+                $q->where('period_id', $activePeriod->id);
+            })
+            ->exists();
+
+        // Ambil data master active
+        $candidates = Candidate::where('period_id', $activePeriod->id)->get();
         $criterias = Criteria::all();
 
-        return view('evaluation.input', compact('candidates', 'criterias', 'hasEvaluated'));
+        return view('evaluation.input', compact('candidates', 'criterias', 'hasEvaluated', 'activePeriod'));
     }
 
     // 2. Simpan Nilai ke Database
@@ -40,16 +56,31 @@ class EvaluationController extends Controller
             'scores' => 'required|array',
         ]);
 
+        $activePeriod = Period::where('is_active', true)->first();
+        if (!$activePeriod) {
+            return back()->with('error', 'Tidak ada periode aktif.');
+        }
+
         DB::beginTransaction();
         try {
             $userId = Auth::id();
 
-            // Hapus penilaian lama jika ada (Reset)
-            Evaluation::where('user_id', $userId)->delete();
+            // Hapus penilaian lama JIKA ada, tapi HANYA untuk kandidat di periode ini
+            // Agar history tahun lalu tidak hilang
+            Evaluation::where('user_id', $userId)
+                ->whereHas('candidate', function($q) use ($activePeriod) {
+                    $q->where('period_id', $activePeriod->id);
+                })
+                ->delete();
 
             // Loop input dari form
             // Struktur name di HTML nanti: scores[candidate_id][criteria_id]
             foreach ($request->scores as $candidateId => $criteriaScores) {
+                // Optional: Verify candidate belongs to active period?
+                // For now assuming UI handles it, but safety check:
+                // $cand = Candidate::find($candidateId);
+                // if($cand->period_id != $activePeriod->id) continue;
+
                 foreach ($criteriaScores as $criteriaId => $score) {
                     Evaluation::create([
                         'user_id' => $userId,
@@ -61,7 +92,8 @@ class EvaluationController extends Controller
             }
 
             // Otomatis Hitung TOPSIS Individu setelah save
-            $this->topsisService->calculateByUser($userId);
+            // Hitung untuk periode aktif saja
+            $this->topsisService->calculateByUser($userId, $activePeriod->id);
 
             DB::commit();
             return redirect()->route('evaluation.index')->with('success', 'Penilaian berhasil disimpan & dihitung!');
