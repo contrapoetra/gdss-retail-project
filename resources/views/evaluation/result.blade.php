@@ -156,7 +156,7 @@
             <div class="flex items-center gap-4">
                 <div class="hidden md:block px-3 py-1 border border-yellow-500/20 bg-yellow-900/10 rounded text-xs font-mono text-yellow-500/70 animate-pulse">
                     <i class="fas fa-info-circle mr-1"></i> KALKULASI ULANG BILA DATA BARU DIGANTI                </div>
-                <form action="{{ route('consensus.generate') }}" method="POST" class="inline-block">
+                <form id="recalc-form" action="{{ route('consensus.generate') }}" method="POST" class="inline-block" onsubmit="return runCalculationAnimation(event)">
                     @csrf
                     <button type="submit" class="group relative inline-flex items-center gap-3 px-6 py-3 bg-linear-to-r from-yellow-700 to-yellow-600 border border-yellow-400 rounded overflow-hidden hover:from-yellow-600 hover:to-yellow-500 transition-all duration-300 shadow-[0_0_20px_rgba(234,179,8,0.4)] hover:shadow-[0_0_30px_rgba(234,179,8,0.6)]">
                         <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 skew-y-12"></div>
@@ -399,7 +399,7 @@
                             <h4 class="font-bold text-yellow-500 mb-4 text-xs font-mono uppercase border-b border-gray-700 pb-1 w-max">
                                 <i class="fas fa-caret-right"></i> A. TITIK ASAL BORDA (AGGREGRASI)
                             </h4>
-                            <div class="overflow-x-auto rounded border border-gray-700 scrollbar-thin scrollbar-thumb-yellow-900 scrollbar-track-gray-900">
+                            <div id="borda-breakdown-container" class="w-full overflow-x-auto rounded border border-gray-700 scrollbar-thin scrollbar-thumb-yellow-900 scrollbar-track-gray-900">
                                 <table class="w-full table-auto text-xs border-collapse text-center font-mono">
                                     <thead class="bg-gray-800 text-gray-400">
                                         <tr>
@@ -452,7 +452,7 @@
                                 </div>
 
                                 {{-- MATRIX X --}}
-                                <div x-show="tab === 'x'" class="overflow-x-auto border border-gray-700 rounded bg-[#0a101e]">
+                                <div id="matrix-x-container" x-show="tab === 'x'" class="w-full overflow-x-auto border border-gray-700 rounded bg-[#0a101e]">
                                     <table class="w-full table-auto text-xs text-center font-mono text-gray-300">
                                         <thead class="bg-gray-800 text-yellow-500">
                                             <tr>
@@ -472,7 +472,7 @@
                                 </div>
 
                                 {{-- MATRIX R --}}
-                                <div x-show="tab === 'r'" class="overflow-x-auto border border-gray-700 rounded bg-[#0a101e]" style="display: none;">
+                                <div id="matrix-r-container" x-show="tab === 'r'" class="w-full overflow-x-auto border border-gray-700 rounded bg-[#0a101e]" style="display: none;">
                                     <table class="w-full table-auto text-xs text-center font-mono text-gray-300">
                                         <thead class="bg-gray-800 text-blue-400">
                                             <tr>
@@ -492,7 +492,7 @@
                                 </div>
 
                                 {{-- MATRIX Y --}}
-                                <div x-show="tab === 'y'" class="overflow-x-auto border border-gray-700 rounded bg-[#0a101e]" style="display: none;">
+                                <div id="matrix-y-container" x-show="tab === 'y'" class="w-full overflow-x-auto border border-gray-700 rounded bg-[#0a101e]" style="display: none;">
                                     <table class="w-full table-auto text-xs text-center font-mono text-gray-300">
                                         <thead class="bg-gray-800 text-green-400">
                                             <tr>
@@ -804,8 +804,190 @@
                     element.style.display = 'none'; 
                 });
             }
+
+            // [ADD] C. Calculation Animation (VISUAL WIZARD)
+            function runCalculationAnimation(e) {
+                e.preventDefault();
+                const overlay = document.getElementById('calculation-overlay');
+                const logContainer = document.getElementById('calc-logs');
+                const progressBar = document.getElementById('calc-progress');
+                const percentText = document.getElementById('calc-percent');
+                const stepTitle = document.getElementById('step-title');
+                const stepContent = document.getElementById('step-content');
+                const form = document.getElementById('recalc-form');
+
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+
+                // Helper to get cloned content or fallback
+                const getContent = (id) => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        const clone = el.cloneNode(true);
+                        
+                        // 1. Force Visibility & Width
+                        clone.style.display = 'block';
+                        clone.style.visibility = 'visible';
+                        clone.style.width = '100%';
+                        clone.classList.add('w-full'); // Tailwind force width
+
+                        // 2. Remove ID to prevent conflicts
+                        clone.removeAttribute('id');
+
+                        // 3. Clean Alpine.js attributes that might hide element
+                        const cleanAlpine = (node) => {
+                            if (node.nodeType === 1) { // Element
+                                node.removeAttribute('x-show');
+                                node.removeAttribute('x-data');
+                                node.removeAttribute('x-transition');
+                                node.removeAttribute('x-transition:enter');
+                                node.removeAttribute('x-transition:leave');
+                                node.style.display = ''; // Reset inline display (except root)
+                            }
+                            if (node.hasChildNodes()) {
+                                node.childNodes.forEach(cleanAlpine);
+                            }
+                        };
+                        cleanAlpine(clone);
+
+                        // Re-apply display block to root after cleaning
+                        clone.style.display = 'block';
+
+                        return clone;
+                    }
+                    return null;
+                };
+
+                // Steps Definition
+                const sequence = [
+                    { 
+                        title: "1. LOADING RAW DATA (MATRIX X)",
+                        log: "> Fetching user evaluations...",
+                        contentId: "matrix-x-container",
+                        fallbackHTML: "<div class='text-yellow-500'>[DATA STREAM INCOMING...]</div>"
+                    },
+                    { 
+                        title: "2. NORMALIZING DATA (MATRIX R)",
+                        log: "> Applying Euclidean Normalization...",
+                        contentId: "matrix-r-container",
+                        fallbackHTML: "<div class='text-blue-400'>[CALCULATING R = X / SQRT(SUM(X^2))...]</div>"
+                    },
+                    { 
+                        title: "3. APPLYING WEIGHTS (MATRIX Y)",
+                        log: "> Multiplying by Criteria Weights...",
+                        contentId: "matrix-y-container",
+                        fallbackHTML: "<div class='text-green-400'>[CALCULATING Y = R * W...]</div>"
+                    },
+                    { 
+                        title: "4. BORDA AGGREGATION",
+                        log: "> Summing points from all Decision Makers...",
+                        contentId: "borda-breakdown-container",
+                        fallbackHTML: "<div class='text-purple-400'>[AGGREGATING VOTES...]</div>"
+                    },
+                    { 
+                        title: "5. FINALIZING CONSENSUS",
+                        log: "> Sorting Candidates & Saving to Database...",
+                        contentId: null,
+                        fallbackHTML: "<div class='text-center'><i class='fas fa-trophy text-6xl text-yellow-500 mb-4 animate-bounce'></i><br>GENERATING FINAL REPORT</div>"
+                    }
+                ];
+
+                let currentStep = 0;
+                const stepDuration = 1200; // ms per step
+                const totalDuration = sequence.length * stepDuration;
+
+                const interval = setInterval(() => {
+                    if (currentStep >= sequence.length) {
+                        clearInterval(interval);
+                        // Submit Form
+                        stepTitle.innerText = "DONE. RELOADING...";
+                        logContainer.innerText = "> REFRESHING SYSTEM...";
+                        form.submit();
+                        return;
+                    }
+
+                    const step = sequence[currentStep];
+                    
+                    // Update UI
+                    stepTitle.innerText = step.title;
+                    logContainer.innerText = step.log;
+                    
+                    // Update Content
+                    stepContent.innerHTML = ''; // clear previous
+                    stepContent.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        let content = null;
+                        if(step.contentId) content = getContent(step.contentId);
+                        
+                        if(content) {
+                            stepContent.appendChild(content);
+                        } else {
+                            stepContent.innerHTML = step.fallbackHTML;
+                        }
+                        stepContent.style.opacity = '1';
+                    }, 100);
+
+                    // Update Progress
+                    const percent = Math.round(((currentStep + 1) / sequence.length) * 100);
+                    progressBar.style.width = percent + "%";
+                    percentText.innerText = percent + "%";
+
+                    currentStep++;
+
+                }, stepDuration);
+            }
         </script>
     @endif
+
+    {{-- ============================================================ --}}
+    {{-- 9. [ADD] CALCULATION OVERLAY (ANIMATION) --}}
+    {{-- ============================================================ --}}
+    <div id="calculation-overlay" class="fixed inset-0 z-[9999] hidden bg-[#05000a] flex-col items-center justify-center font-mono">
+        <div class="w-full max-w-5xl p-8 relative flex flex-col items-center h-full justify-center">
+            
+            {{-- Header Overlay --}}
+            <div class="text-center mb-8 relative z-10">
+                <div class="inline-block border border-yellow-500/50 bg-yellow-900/10 px-6 py-2 rounded mb-4 shadow-[0_0_20px_rgba(234,179,8,0.2)]">
+                    <h2 class="text-yellow-400 text-xl font-bold tracking-[0.3em] animate-pulse flex items-center gap-3">
+                        <i class="fas fa-network-wired"></i> GDSS PROTOCOL ENGAGED
+                    </h2>
+                </div>
+                <p id="step-title" class="text-white text-lg font-mono tracking-widest uppercase opacity-80 h-8">INITIALIZING...</p>
+            </div>
+
+            {{-- VISUAL STEP CONTAINER --}}
+            <div id="visual-step-container" class="w-full relative flex-1 border border-gray-800 bg-[#0a050f] rounded-lg overflow-hidden relative shadow-2xl mb-8">
+                
+                {{-- Scanlines --}}
+                <div class="absolute inset-0 pointer-events-none bg-[url('https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif')] opacity-5 mix-blend-overlay"></div>
+                <div class="absolute inset-0 bg-linear-to-b from-transparent via-yellow-500/5 to-transparent h-full w-full animate-[shimmer_3s_infinite] pointer-events-none"></div>
+
+                {{-- DYNAMIC CONTENT WILL BE INJECTED HERE --}}
+                <div id="step-content" class="p-8 w-full h-full flex flex-col justify-center items-center overflow-auto text-xs text-gray-300">
+                    {{-- Default content --}}
+                    <div class="flex flex-col items-center gap-4 opacity-50">
+                        <i class="fas fa-spinner fa-spin text-4xl text-yellow-500"></i>
+                        <span>ESTABLISHING SECURE CONNECTION...</span>
+                    </div>
+                </div>
+
+            </div>
+
+            {{-- Progress Bar & Logs --}}
+            <div class="w-full max-w-3xl">
+                <div class="w-full h-1 bg-gray-900 relative overflow-hidden rounded mb-2">
+                    <div id="calc-progress" class="absolute top-0 left-0 h-full bg-yellow-500 w-0 transition-all duration-300 ease-out shadow-[0_0_15px_#eab308]"></div>
+                </div>
+                <div class="flex justify-between items-end">
+                    <div id="calc-logs" class="text-[10px] text-gray-500 font-mono h-6 overflow-hidden">
+                        > WAITING FOR COMMAND...
+                    </div>
+                    <span id="calc-percent" class="text-yellow-500 font-bold text-xs">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{-- FOOTER LEGEND --}}
     <div class="mt-6 holo-card rounded-lg border border-yellow-500/20 bg-[#0B1120]/80 backdrop-blur p-4 relative no-print animate-slide-up delay-300">
