@@ -206,16 +206,20 @@
                                 </div>
                             </td>
                             @foreach($criterias as $criteria)
+                                @php
+                                    $savedScore = $existingEvaluations[$candidate->id][$criteria->id] ?? null;
+                                @endphp
                                 <td class="p-3 border-r border-emerald-500/10 text-center relative">
                                     <div class="relative">
                                         <select name="scores[{{ $candidate->id }}][{{ $criteria->id }}]" 
-                                                class="w-full p-2 pl-3 bg-[#0a101e] border border-emerald-500/30 text-gray-200 rounded text-xs font-mono focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 focus:shadow-[0_0_10px_rgba(16,185,129,0.3)] focus:outline-none transition-all appearance-none hover:border-emerald-500/60 cursor-pointer" required>
-                                            <option value="" disabled selected class="text-gray-600">- INPUT -</option>
-                                            <option value="1" class="bg-gray-900 text-red-400 font-bold">1 - [SANGAT KURANG]</option>
-                                            <option value="2" class="bg-gray-900 text-orange-400">2 - [KURANG]</option>
-                                            <option value="3" class="bg-gray-900 text-yellow-400">3 - [CUKUP]</option>
-                                            <option value="4" class="bg-gray-900 text-blue-400">4 - [BAIK]</option>
-                                            <option value="5" class="bg-gray-900 text-emerald-400 font-bold">5 - [SANGAT BAIK]</option>
+                                                onchange="this.classList.remove('text-gray-500', 'font-normal'); this.classList.add('text-emerald-400', 'font-bold');"
+                                                class="w-full p-2 pl-3 bg-[#0a101e] border border-emerald-500/30 {{ $savedScore ? 'text-gray-500 font-normal' : 'text-gray-200' }} rounded text-xs font-mono focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 focus:shadow-[0_0_10px_rgba(16,185,129,0.3)] focus:outline-none transition-all appearance-none hover:border-emerald-500/60 cursor-pointer" required>
+                                            <option value="" disabled {{ $savedScore ? '' : 'selected' }} class="text-gray-600">- INPUT -</option>
+                                            <option value="1" {{ $savedScore == 1 ? 'selected' : '' }} class="bg-gray-900 text-red-400 font-bold">1 - [SANGAT KURANG]</option>
+                                            <option value="2" {{ $savedScore == 2 ? 'selected' : '' }} class="bg-gray-900 text-orange-400">2 - [KURANG]</option>
+                                            <option value="3" {{ $savedScore == 3 ? 'selected' : '' }} class="bg-gray-900 text-yellow-400">3 - [CUKUP]</option>
+                                            <option value="4" {{ $savedScore == 4 ? 'selected' : '' }} class="bg-gray-900 text-blue-400">4 - [BAIK]</option>
+                                            <option value="5" {{ $savedScore == 5 ? 'selected' : '' }} class="bg-gray-900 text-emerald-400 font-bold">5 - [SANGAT BAIK]</option>
                                         </select>
                                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-emerald-500">
                                             <i class="fas fa-caret-down text-xs"></i>

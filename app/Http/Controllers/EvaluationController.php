@@ -34,18 +34,25 @@ class EvaluationController extends Controller
              ]);
         }
 
-        // Cek apakah user sudah pernah menilai di periode ini?
-        $hasEvaluated = Evaluation::where('user_id', Auth::id())
+        // Ambil data penilaian sebelumnya (jika ada)
+        // Format: [candidate_id => [criteria_id => score]]
+        $existingEvaluations = Evaluation::where('user_id', Auth::id())
             ->whereHas('candidate', function($q) use ($activePeriod) {
                 $q->where('period_id', $activePeriod->id);
             })
-            ->exists();
+            ->get()
+            ->groupBy('candidate_id')
+            ->map(function ($items) {
+                return $items->pluck('score', 'criteria_id');
+            });
+            
+        $hasEvaluated = $existingEvaluations->isNotEmpty();
 
         // Ambil data master active
         $candidates = Candidate::where('period_id', $activePeriod->id)->get();
         $criterias = Criteria::all();
 
-        return view('evaluation.input', compact('candidates', 'criterias', 'hasEvaluated', 'activePeriod'));
+        return view('evaluation.input', compact('candidates', 'criterias', 'hasEvaluated', 'activePeriod', 'existingEvaluations'));
     }
 
     // 2. Simpan Nilai ke Database
