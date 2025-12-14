@@ -233,56 +233,79 @@
                 </div>
                 @endif
 
-                {{-- GRID LAYOUT --}}
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 grid-print">
+                {{-- CHART SECTION WITH TABS --}}
+                <div x-data="{ activeChart: 'borda' }" class="mb-8 col-print">
                     
-                    {{-- B. GRAFIK BAR (BORDA) --}}
-                    <div class="bg-[#050b14] p-6 rounded-lg border border-yellow-500/20 shadow-inner col-print relative cyber-corners group transition-colors duration-500">
-                        <h3 class="font-mono font-bold text-gray-400 text-xs mb-4 border-b border-gray-800 pb-2 uppercase tracking-wider group-hover:text-yellow-400 transition-colors">
-                            <i class="fas fa-chart-bar mr-2 text-yellow-500"></i> Statistik (Poin Borda)
-                        </h3>
-                        <div class="h-64 w-full relative">
-                            <canvas id="bordaChart"></canvas>
-                        </div>
+                    {{-- TABS SWITCHER --}}
+                    <div class="flex gap-4 mb-4 no-print border-b border-gray-800 pb-1">
+                        <button @click="activeChart = 'borda'" 
+                            :class="activeChart === 'borda' ? 'text-yellow-400 border-yellow-400 bg-yellow-400/10' : 'text-gray-500 border-transparent hover:text-gray-300'"
+                            class="px-4 py-2 text-xs font-bold font-mono uppercase tracking-widest border-b-2 transition-all duration-300 flex items-center gap-2">
+                            <i class="fas fa-chart-bar"></i> Statistik Poin
+                        </button>
+                        <button @click="activeChart = 'radar'" 
+                            :class="activeChart === 'radar' ? 'text-cyan-400 border-cyan-400 bg-cyan-400/10' : 'text-gray-500 border-transparent hover:text-gray-300'"
+                            class="px-4 py-2 text-xs font-bold font-mono uppercase tracking-widest border-b-2 transition-all duration-300 flex items-center gap-2">
+                            <i class="fas fa-spider"></i> Boundary Analysis
+                        </button>
                     </div>
 
-                    {{-- C. GRAFIK RADAR (BOUNDARY) --}}
-                    <div class="bg-[#050b14] p-6 rounded-lg border border-cyan-500/20 shadow-inner col-print relative cyber-corners group transition-colors duration-500">
-                        <h3 class="font-mono font-bold text-gray-400 text-xs mb-4 border-b border-gray-800 pb-2 uppercase tracking-wider group-hover:text-cyan-400 transition-colors">
-                            <i class="fas fa-spider mr-2 text-cyan-500"></i> Boundary Chart (Top 3 Performance)
-                        </h3>
-                        <div class="h-64 w-full relative">
-                            <canvas id="radarChart"></canvas>
-                        </div>
-                    </div>
-
-                    {{-- D. JUARA UTAMA (WINNER CARD) --}}
-                    <div class="lg:col-span-2 bg-linear-to-br from-yellow-900/20 to-[#050b14] p-6 rounded-lg border border-yellow-500/30 text-center flex flex-col justify-center items-center mt-4 lg:mt-0 col-print relative overflow-hidden hover:shadow-[0_0_30px_rgba(234,179,8,0.15)] transition-all duration-500">
-                        {{-- Decorative Background --}}
-                        <div class="absolute inset-0" style="background-image: radial-gradient(circle at center, rgba(234,179,8,0.1) 0%, transparent 70%);"></div>
-                        <div class="absolute top-0 right-0 p-2 opacity-30"><i class="fas fa-quote-right text-4xl text-yellow-900"></i></div>
+                    {{-- GRID LAYOUT --}}
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 grid-print">
                         
-                        <div class="relative z-10 inline-block p-6 rounded-full bg-yellow-500/10 border border-yellow-400 text-yellow-400 mb-4 shadow-[0_0_20px_rgba(234,179,8,0.3)] no-print animate-float">
-                            <i class="fas fa-trophy fa-4x drop-shadow-[0_0_15px_rgba(234,179,8,0.9)]"></i>
-                        </div>
-                        
-                        <h2 class="text-yellow-500/70 font-mono font-bold uppercase tracking-[0.3em] text-xs mb-2 relative z-10">
-                            KANDIDAT TERBAIK
-                        </h2>
-                        
-                        @if(isset($results[0]))
-                            <h1 class="text-3xl md:text-4xl font-black text-white mt-2 mb-2 uppercase tracking-tight relative z-10 drop-shadow-md">
-                                {{ $results[0]->candidate->name }}
-                            </h1>
-                            <div class="mt-4 flex gap-3 justify-center relative z-10">
-                                <div class="bg-yellow-500 text-black px-4 py-1 rounded text-xs font-bold shadow-[0_0_15px_rgba(234,179,8,0.5)] font-mono badge-print">
-                                    SKOR: {{ $results[0]->total_points }}
-                                </div>
-                                <div class="bg-[#0B1120] border border-yellow-400 text-yellow-400 px-4 py-1 rounded text-xs font-bold shadow font-mono badge-print">
-                                    RANK #1
+                        {{-- B. CHART CONTAINER (SWITCHABLE) --}}
+                        <div class="relative">
+                            {{-- BORDA CHART --}}
+                            <div x-show="activeChart === 'borda'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                                 class="bg-[#050b14] p-6 rounded-lg border border-yellow-500/20 shadow-inner h-full relative cyber-corners group">
+                                <h3 class="font-mono font-bold text-gray-400 text-xs mb-4 border-b border-gray-800 pb-2 uppercase tracking-wider group-hover:text-yellow-400 transition-colors">
+                                    <i class="fas fa-chart-bar mr-2 text-yellow-500"></i> Statistik (Poin Borda)
+                                </h3>
+                                <div class="h-64 w-full relative">
+                                    <canvas id="bordaChart"></canvas>
                                 </div>
                             </div>
-                        @endif
+
+                            {{-- RADAR CHART --}}
+                            <div x-show="activeChart === 'radar'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                                 class="bg-[#050b14] p-6 rounded-lg border border-cyan-500/20 shadow-inner h-full relative cyber-corners group" style="display: none;">
+                                <h3 class="font-mono font-bold text-gray-400 text-xs mb-4 border-b border-gray-800 pb-2 uppercase tracking-wider group-hover:text-cyan-400 transition-colors">
+                                    <i class="fas fa-spider mr-2 text-cyan-500"></i> Boundary Chart (Top 3 Performance)
+                                </h3>
+                                <div class="h-64 w-full relative">
+                                    <canvas id="radarChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- D. JUARA UTAMA (WINNER CARD) --}}
+                        <div class="bg-linear-to-br from-yellow-900/20 to-[#050b14] p-6 rounded-lg border border-yellow-500/30 text-center flex flex-col justify-center items-center relative overflow-hidden hover:shadow-[0_0_30px_rgba(234,179,8,0.15)] transition-all duration-500">
+                            {{-- Decorative Background --}}
+                            <div class="absolute inset-0" style="background-image: radial-gradient(circle at center, rgba(234,179,8,0.1) 0%, transparent 70%);"></div>
+                            <div class="absolute top-0 right-0 p-2 opacity-30"><i class="fas fa-quote-right text-4xl text-yellow-900"></i></div>
+                            
+                            <div class="relative z-10 inline-block p-6 rounded-full bg-yellow-500/10 border border-yellow-400 text-yellow-400 mb-4 shadow-[0_0_20px_rgba(234,179,8,0.3)] no-print animate-float">
+                                <i class="fas fa-trophy fa-4x drop-shadow-[0_0_15px_rgba(234,179,8,0.9)]"></i>
+                            </div>
+                            
+                            <h2 class="text-yellow-500/70 font-mono font-bold uppercase tracking-[0.3em] text-xs mb-2 relative z-10">
+                                KANDIDAT TERBAIK
+                            </h2>
+                            
+                            @if(isset($results[0]))
+                                <h1 class="text-3xl md:text-4xl font-black text-white mt-2 mb-2 uppercase tracking-tight relative z-10 drop-shadow-md">
+                                    {{ $results[0]->candidate->name }}
+                                </h1>
+                                <div class="mt-4 flex gap-3 justify-center relative z-10">
+                                    <div class="bg-yellow-500 text-black px-4 py-1 rounded text-xs font-bold shadow-[0_0_15px_rgba(234,179,8,0.5)] font-mono badge-print">
+                                        SKOR: {{ $results[0]->total_points }}
+                                    </div>
+                                    <div class="bg-[#0B1120] border border-yellow-400 text-yellow-400 px-4 py-1 rounded text-xs font-bold shadow font-mono badge-print">
+                                        RANK #1
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
 
@@ -726,11 +749,24 @@
             function generatePDF() {
                 const element = document.getElementById('pdf-template');
                 
+                // FORCE VISIBLE ALL CHARTS FOR CAPTURE
+                // Karena x-show menyembunyikan elemen, html2canvas mungkin gagal capture (width 0).
+                // Kita akan memaksa display:block sementara.
+                const radarContainer = document.getElementById('radarChart')?.parentElement?.parentElement; // Container div
+                const bordaContainer = document.getElementById('bordaChart')?.parentElement?.parentElement;
+                
+                const originalRadarDisplay = radarContainer ? radarContainer.style.display : '';
+                const originalBordaDisplay = bordaContainer ? bordaContainer.style.display : '';
+
+                if(radarContainer) radarContainer.style.display = 'block';
+                if(bordaContainer) bordaContainer.style.display = 'block';
+
                 // Canvas Helpers
                 const captureCanvas = (id) => {
                     const c = document.getElementById(id);
                     if (!c) return null;
                     const temp = document.createElement('canvas');
+                    // Pakai width/height eksplisit dari canvas asli
                     temp.width = c.width; temp.height = c.height;
                     const ctx = temp.getContext('2d');
                     ctx.fillStyle = '#FFFFFF';
@@ -746,6 +782,14 @@
                 // Inject Radar Chart
                 const radarImg = captureCanvas('radarChart');
                 if(radarImg) document.getElementById('radarImageTarget').src = radarImg;
+
+                // RESTORE VISIBILITY
+                // Kita kembalikan ke kosong agar Alpine.js mengambil alih lagi, 
+                // atau set ke none jika memang hidden.
+                // Masalah: Alpine mungkin bingung jika kita mainkan style inline.
+                // Solusi aman: Hapus style inline display, biarkan Alpine re-eval x-show.
+                if(radarContainer) radarContainer.style.display = '';
+                if(bordaContainer) bordaContainer.style.display = '';
 
                 const opt = {
                     margin:       0, // Reset margin
