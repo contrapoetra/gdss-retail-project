@@ -46,15 +46,15 @@ DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=gdss_retail_db
-DB_USERNAME=root
+DB_USERNAME=gdss_retail_admin
 DB_PASSWORD=gdss_retail_db_passwor_gdss_retail_db_pssword_gdss_retail_db_pasword
 ```
+Ensure your local MySQL `root` user actually uses this password, or update the `.env` file to match your actual local database credentials. If you need to set up a specific user with this password, you can run the following SQL command:
 
-> **Note:** Ensure your local MySQL `root` user actually uses this password, or update the `.env` file to match your actual local database credentials. If you need to set up a specific user with this password, you can run the following SQL command:
-> ```sql
-> ALTER USER 'root'@'localhost' IDENTIFIED BY 'gdss_retail_db_passwor_gdss_retail_db_pssword_gdss_retail_db_pasword';
-> FLUSH PRIVILEGES;
-> ```
+```sql
+GRANT ALL PRIVILEGES ON gdss_retail_db.* TO 'gdss_retail_admin'@'%' IDENTIFIED BY 'gdss_retail_db_passwor_gdss_retail_db_pssword_gdss_retail_db_pasword' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+```
 
 ### 4. Run the Application
 Start the local development server.
